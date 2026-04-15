@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Votación - Elecciones Estudiantiles</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="main-header">
+    <div class="header-content">
+      <div class="header-left">
+        <img src="imagenes/logo.jpg" alt="Logo" class="header-logo">
+        <h1>Plataforma de Elecciones Estudiantiles</h1>
+      </div>
+      <nav>
+        <a href="index.html">Inicio</a>
+        <a href="registrar-estudiantes.html">Registrar Estudiantes</a>
+        <a href="registro-candidatos.html">Registro de Candidatos</a>
+        <a href="votacion.html">Votación</a>
+        <a href="resultados.html">Resultados</a>
+      </nav>
+    </div>
+  </header>
+  <main>
+    <section id="votacion">
+      <h2>Votación</h2>
+      <form id="form-votacion">
+        <input type="text" id="codigo-unico" placeholder="Código único o Carnet" required>
+        <button type="button" id="btn-validar-codigo">Validar código</button>
+      </form>
+      <div id="candidatos-votacion" style="display:none;"></div>
+      <div id="mensaje-votacion"></div>
+    </section>
+  </main>
+  <script src="js/votacion.js"></script>
+</body>
+</html> 

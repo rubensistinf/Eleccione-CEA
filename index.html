@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Elecciones Estudiantiles</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="main-header">
+    <div class="header-content">
+      <div class="header-left">
+        <img src="imagenes/logo.jpg" alt="Logo" class="header-logo">
+        <h1>Plataforma de Elecciones Estudiantiles</h1>
+      </div>
+      <nav>
+        <a href="index.html">Inicio</a>
+        <a href="#" id="link-registrar-estudiantes">Registrar Estudiantes</a>
+        <a href="#" id="link-registro-candidatos">Registro de Candidatos</a>
+        <a href="votacion.html">Votación</a>
+        <a href="resultados.html">Resultados</a>
+      </nav>
+    </div>
+  </header>
+  <main>
+    <section class="presentacion-centro">
+      <div class="titulo-centro">
+        <h2>CENTRO DE EDUCACIÓN ALTERNATIVA</h2>
+        <h3>"Prof. Herman Ortiz Camargo"</h3>
+      </div>
+    </section>
+    <section class="carrusel-section">
+      <div class="carrusel-container">
+        <img id="carrusel-img" src="img/WhatsApp Image 2025-05-30 at 9.55.51 PM.jpeg" alt="Imagen carrusel" class="carrusel-img">
+        <div class="carrusel-controls">
+          <button id="prev-btn" class="carrusel-btn">&lt;</button>
+          <button id="next-btn" class="carrusel-btn">&gt;</button>
+        </div>
+      </div>
+    </section>
+  </main>
+  <button id="btn-reiniciar-elecciones" style="position:fixed;bottom:30px;right:30px;z-index:1000;">Reiniciar Elecciones Estudiantiles</button>
+  <div id="modal-reiniciar" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);z-index:2000;align-items:center;justify-content:center;">
+    <div style="background:#fff;padding:30px 20px;border-radius:8px;max-width:90vw;width:320px;box-shadow:0 2px 10px #0003;text-align:center;">
+      <h3>Confirmar Reinicio</h3>
+      <p>Ingrese usuario y contraseña para reiniciar las elecciones:</p>
+      <input type="text" id="usuario-reinicio" placeholder="Usuario" style="width:90%;margin-bottom:10px;"><br>
+      <input type="password" id="contrasena-reinicio" placeholder="Contraseña" style="width:90%;margin-bottom:10px;"><br>
+      <button id="confirmar-reinicio">Reiniciar</button>
+      <button id="cancelar-reinicio" style="margin-left:10px;">Cancelar</button>
+      <div id="mensaje-reinicio" style="color:red;margin-top:10px;"></div>
+    </div>
+  </div>
+  <div id="modal-login" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);z-index:3000;align-items:center;justify-content:center;">
+    <div style="background:#fff;padding:30px 20px;border-radius:8px;max-width:90vw;width:320px;box-shadow:0 2px 10px #0003;text-align:center;">
+      <h3>Acceso restringido</h3>
+      <p>Ingrese usuario y contraseña para continuar:</p>
+      <input type="text" id="usuario-login" placeholder="Usuario" style="width:90%;margin-bottom:10px;"><br>
+      <input type="password" id="contrasena-login" placeholder="Contraseña" style="width:90%;margin-bottom:10px;"><br>
+      <button id="confirmar-login">Ingresar</button>
+      <button id="cancelar-login" style="margin-left:10px;">Cancelar</button>
+      <div id="mensaje-login" style="color:red;margin-top:10px;"></div>
+    </div>
+  </div>
+  <script src="js/carrusel.js"></script>
+  <script src="js/reiniciar-elecciones.js"></script>
+  <script src="js/login-acceso.js"></script>
+</body>
+</html> 

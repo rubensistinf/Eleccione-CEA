@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registrar Estudiantes - Elecciones Estudiantiles</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="main-header">
+    <div class="header-content">
+      <div class="header-left">
+        <img src="imagenes/logo.jpg" alt="Logo" class="header-logo">
+        <h1>Plataforma de Elecciones Estudiantiles</h1>
+      </div>
+      <nav>
+        <a href="index.html">Inicio</a>
+        <a href="registrar-estudiantes.html">Registrar Estudiantes</a>
+        <a href="registro-candidatos.html">Registro de Candidatos</a>
+        <a href="votacion.html">Votación</a>
+        <a href="resultados.html">Resultados</a>
+      </nav>
+    </div>
+  </header>
+  <main class="container-registro">
+    <div class="registro-grid">
+      <!-- Panel de Registro -->
+      <section class="panel-registro">
+        <div class="panel-header">
+          <img src="imagenes/logo.jpg" alt="Logo" class="content-logo" style="height: 80px; width: auto; margin-bottom: 20px;">
+          <h2>Registrar Nuevo Estudiante</h2>
+          <p>Ingresa los datos del estudiante para generar su código de votación</p>
+        </div>
+        <form id="form-estudiante">
+          <div class="form-group">
+            <label for="nombre-estudiante">Nombre Completo</label>
+            <input type="text" id="nombre-estudiante" placeholder="Ej: Juan Pérez González" required>
+          </div>
+          <div class="form-group">
+            <label for="dni-estudiante">Carnet de Identidad</label>
+            <input type="text" id="dni-estudiante" placeholder="Ej: 12345678" required>
+          </div>
+          <button type="submit" class="btn-registrar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            Registrar Estudiante
+          </button>
+        </form>
+      </section>
+
+      <!-- Panel de Lista -->
+      <section class="panel-lista">
+        <div id="lista-estudiantes"></div>
+      </section>
+    </div>
+  </main>
+  <script src="js/registrar-estudiantes.js"></script>
+  <script>
+  // Protección de acceso
+  (function() {
+    const acceso = sessionStorage.getItem('accesoAdmin');
+    if (acceso !== 'ok') {
+      window.location.href = 'index.html';
+    }
+  })();
+  </script>
+</body>
+</html> 
