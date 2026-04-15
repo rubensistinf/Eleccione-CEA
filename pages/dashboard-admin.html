@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Admin</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <header class="main-header">
+    <div class="header-content">
+      <div class="header-left">
+        <h1>Panel de Administrador</h1>
+      </div>
+      <nav>
+        <button onclick="cerrarSesion()" style="background:transparent; color:white; border:none; cursor:pointer; font-weight:bold;">Cerrar Sesión</button>
+      </nav>
+    </div>
+  </header>
+  <main style="padding: 20px;">
+    <h2>Control de Elecciones</h2>
+    
+    <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+      <h3>Crear Nueva Elección</h3>
+      <input type="text" id="nueva-eleccion-nombre" placeholder="Nombre de Elección" style="padding:8px; width: 300px;">
+      <button onclick="crearEleccion()" style="padding:8px 15px;">Crear</button>
+      <div id="msg-eleccion" style="color:green; margin-top:10px;"></div>
+    </div>
+
+    <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+      <h3>Asignar Mesas y Jefes</h3>
+      <input type="number" id="mesa-eleccion-id" placeholder="ID. Elección">
+      <input type="number" id="mesa-numero" placeholder="N° de Mesa">
+      <button onclick="crearMesa()" style="padding:8px 15px;">Crear Mesa</button>
+      <div id="msg-mesa" style="color:green; margin-top:10px;"></div>
+    </div>
+
+    <div style="background: #f9f9f9; padding: 20px; border-radius: 8px;">
+      <h3>Finalizar y Publicar Resultados</h3>
+      <input type="number" id="pub-eleccion-id" placeholder="ID de Elección">
+      <button onclick="publicarResultados()" style="padding:8px 15px; background: red; color: white;">Publicar Resultados Definitivos</button>
+      <div id="msg-pub" style="margin-top:10px;"></div>
+    </div>
+  </main>
+  
+  <script src="../js/api.js"></script>
+  <script>
+    // Validar Rol
+    if(localStorage.getItem('user_rol') !== 'admin') cerrarSesion();
+
+    async function crearEleccion() {
+        const nombre = document.getElementById('nueva-eleccion-nombre').value;
+        const res = await apiFetch('/admin/elecciones', {
+            method: 'POST',
+            body: JSON.stringify({ nombre })
+        });
+        if(res && res.ok){
+            const data = await res.json();
+            document.getElementById('msg-eleccion').innerText = `Elección creada con ID: ${data.id}`;
+        }
+    }
+
+    async function crearMesa() {
+        const eleccion_id = document.getElementById('mesa-eleccion-id').value;
+        const numero = document.getElementById('mesa-numero').value;
+        const res = await apiFetch('/admin/mesas', {
+            method: 'POST',
+            body: JSON.stringify({ eleccion_id: parseInt(eleccion_id), numero: parseInt(numero) })
+        });
+        if(res && res.ok){
+            const data = await res.json();
+            document.getElementById('msg-mesa').innerText = `Mesa ${data.numero} creada.`;
+        }
+    }
+
+    async function publicarResultados() {
+        const eleccion_id = document.getElementById('pub-eleccion-id').value;
+        const res = await apiFetch(`/admin/publicar-resultados?eleccion_id=${eleccion_id}`, {
+            method: 'POST'
+        });
+        if(res && res.ok) {
+            document.getElementById('msg-pub').innerText = "Resultados publicados con éxito.";
+            document.getElementById('msg-pub').style.color = "green";
+        }
+    }
+  </script>
+</body>
+</html>

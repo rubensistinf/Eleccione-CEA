@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Jefe de Mesa</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <header class="main-header">
+    <div class="header-content">
+      <div class="header-left">
+        <h1>Mesa de Votación</h1>
+      </div>
+      <nav>
+        <button onclick="cerrarSesion()" style="background:transparent; color:white; border:none; cursor:pointer; font-weight:bold;">Cerrar Sesión</button>
+      </nav>
+    </div>
+  </header>
+  <main style="padding: 20px; text-align: center;">
+    
+    <div style="background: #f9f9f9; padding: 30px; border-radius: 8px; max-width: 500px; margin: 40px auto;">
+      <h3>Habilitar Votante para Sufragio</h3>
+      <p style="color:#555; margin-bottom: 20px;">Ingrese el C.I. del estudiante que se presentó en la mesa con su documento de identidad.</p>
+      
+      <input type="text" id="ci-votante" placeholder="Nro. C.I. del Votante" style="width:80%; padding:10px; margin-bottom:20px; font-size: 16px;"><br>
+      
+      <button onclick="consultar()" style="padding:10px 20px; background: #28a745; color: white;">Consultar Votante</button>
+      <button onclick="validar()" style="padding:10px 20px; background: #0056b3; color: white; display: none;" id="btn-habilitar">HABILITAR VOTANTE</button>
+      
+      <div id="info-votante" style="margin-top:20px; font-weight: bold; font-size: 18px;"></div>
+    </div>
+
+  </main>
+  
+  <script src="../js/api.js"></script>
+  <script>
+    if(localStorage.getItem('user_rol') !== 'jefe' && localStorage.getItem('user_rol') !== 'admin') cerrarSesion();
+
+    async function consultar() {
+        const ci = document.getElementById('ci-votante').value;
+        const msg = document.getElementById('info-votante');
+        const btnHabilitar = document.getElementById('btn-habilitar');
+        
+        btnHabilitar.style.display = 'none';
+        
+        const res = await apiFetch(`/jefe/votante/${ci}`, { method: 'GET' });
+        if(res){
+            if(res.ok) {
+                const data = await res.json();
+                if(data.ha_votado) {
+                    msg.style.color = "red";
+                    msg.innerText = `El estudiante ${data.nombre} YA HA VOTADO.`;
+                } else if(data.habilitado) {
+                    msg.style.color = "orange";
+                    msg.innerText = `El estudiante ${data.nombre} ya está habilitado esperando a votar.`;
+                } else {
+                    msg.style.color = "green";
+                    msg.innerText = `${data.nombre} encontrado. Autorice su voto.`;
+                    btnHabilitar.style.display = 'inline-block';
+                }
+            } else {
+                msg.style.color = "red";
+                msg.innerText = "No se encontró el votante en el padrón.";
+            }
+        }
+    }
+
+    async function validar() {
+        const ci = document.getElementById('ci-votante').value;
+        const msg = document.getElementById('info-votante');
+        const btnHabilitar = document.getElementById('btn-habilitar');
+        
+        const res = await apiFetch(`/jefe/validar-votante?ci=${ci}`, { method: 'POST' });
+        if(res) {
+            if(res.ok) {
+                const data = await res.json();
+                msg.style.color = "green";
+                msg.innerText = `VOTANTE HABILITADO.\nPuede dirigirse al cuarto oscuro.\nCorreo login: ${data.correo_login}`;
+                btnHabilitar.style.display = 'none';
+                document.getElementById('ci-votante').value = '';
+            } else {
+                const err = await res.json();
+                msg.style.color = "red";
+                msg.innerText = err.detail;
+            }
+        }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Votación CEA</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <style>
+    .candidatos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; padding: 20px; }
+    .candidato-card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; border: 2px solid transparent; cursor: pointer; transition: 0.3s; }
+    .candidato-card:hover { border-color: #0056b3; }
+    .candidato-card.selected { border-color: #28a745; background: #e9f7ef; }
+    .btn-votar { background: #28a745; color: white; padding: 15px 30px; font-size: 18px; border: none; border-radius: 8px; cursor: pointer; margin-top: 20px; width: 100%; max-width: 300px; display: none; }
+  </style>
+</head>
+<body>
+  <header class="main-header">
+    <div class="header-content">
+      <div class="header-left">
+        <h1>Papeleta Digital</h1>
+      </div>
+      <nav>
+        <button onclick="cerrarSesion()" style="background:transparent; color:white; border:none; cursor:pointer; font-weight:bold;">Finalizar / Salir</button>
+      </nav>
+    </div>
+  </header>
+  <main style="max-width: 800px; margin: 0 auto; text-align: center;">
+    
+    <div id="estado-votacion" style="margin-top: 30px;">
+        <h2>Elige a tu candidato</h2>
+        <div class="candidatos-grid" id="lista-candidatos"></div>
+        <button class="btn-votar" id="btn-emitir" onclick="enviarVoto()">EMITIR VOTO</button>
+        <div id="msg-votar" style="margin-top: 20px; font-weight:bold; font-size:18px;"></div>
+    </div>
+
+    <!-- Resultados en vivo -->
+    <div id="seccion-resultados" style="display:none; margin-top: 40px; background: #f9f9f9; padding: 20px; border-radius:8px;">
+        <h2>Resultados en Vivo</h2>
+        <div id="resultados-box" style="font-size: 20px; text-align:left; max-width: 400px; margin: 0 auto;"></div>
+    </div>
+
+  </main>
+  
+  <script src="../js/api.js"></script>
+  <script>
+    if(localStorage.getItem('user_rol') !== 'votante') cerrarSesion();
+
+    let candidatoSeleccionado = null;
+    let eleccionIdGlobal = null;
+
+    async function cargarCandidatos() {
+        const res = await apiFetch('/votante/candidatos', { method: 'GET' });
+        if(res && res.ok) {
+            const data = await res.json();
+            const container = document.getElementById('lista-candidatos');
+            container.innerHTML = '';
+            data.forEach(c => {
+                eleccionIdGlobal = c.eleccion_id; // Asumimos una eleccion activa
+                
+                const card = document.createElement('div');
+                card.className = 'candidato-card';
+                card.onclick = () => seleccionar(card, c.id);
+                card.innerHTML = `
+                    <img src="../imagenes/logo.jpg" alt="Logo" style="width:80px; height:80px; border-radius:50%; margin-bottom:10px;">
+                    <h3>${c.nombre}</h3>
+                    <p style="color:#555;">${c.cargo}</p>
+                `;
+                container.appendChild(card);
+            });
+        }
+    }
+
+    function seleccionar(cardElement, id) {
+        document.querySelectorAll('.candidato-card').forEach(el => el.classList.remove('selected'));
+        cardElement.classList.add('selected');
+        candidatoSeleccionado = id;
+        document.getElementById('btn-emitir').style.display = 'inline-block';
+    }
+
+    async function enviarVoto() {
+        if(!candidatoSeleccionado) return;
+        
+        const res = await apiFetch('/votante/votar', {
+            method: 'POST',
+            body: JSON.stringify({ candidato_id: candidatoSeleccionado, eleccion_id: eleccionIdGlobal })
+        });
+
+        const msg = document.getElementById('msg-votar');
+        if(res) {
+            if(res.ok) {
+                document.getElementById('lista-candidatos').style.display = 'none';
+                document.getElementById('btn-emitir').style.display = 'none';
+                document.querySelector('h2').innerText = "¡GRACIAS POR SU VOTO!";
+                msg.style.color = 'green';
+                msg.innerText = "Su voto ha sido registrado correctamente y de forma anónima.";
+                
+                iniciarResultadosEnVivo();
+            } else {
+                const err = await res.json();
+                msg.style.color = 'red';
+                msg.innerText = err.detail;
+            }
+        }
+    }
+
+    async function cargarResultados() {
+        const res = await apiFetch('/admin/resultados', { method: 'GET' }); // Usando la ruta pubica de admin
+        if(res && res.ok) {
+            const data = await res.json();
+            const box = document.getElementById('resultados-box');
+            box.innerHTML = '';
+            data.forEach(r => {
+                box.innerHTML += `<div style="padding:10px; border-bottom: 1px solid #ccc;">
+                    <strong>${r.candidato}</strong>: ${r.votos} voto(s)
+                </div>`;
+            });
+        }
+    }
+
+    function iniciarResultadosEnVivo() {
+        document.getElementById('seccion-resultados').style.display = 'block';
+        cargarResultados();
+        setInterval(cargarResultados, 5000);
+    }
+
+    cargarCandidatos();
+  </script>
+</body>
+</html>
