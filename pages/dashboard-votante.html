@@ -190,6 +190,17 @@
     }
     .resultado-barra-fill { height:100%; border-radius:4px; background:linear-gradient(90deg,var(--azul),var(--dorado)); transition:width 0.8s ease; }
     .resultado-votos { font-size:0.8rem; color:var(--muted); text-align:right; }
+
+    /* DESCARGAR CARNET */
+    .btn-descargar-carnet {
+      background: linear-gradient(135deg, #f5a623, #e08800);
+      color: #1a1a2e; padding: 14px 36px; font-size: 1rem; font-weight: 800;
+      border: none; border-radius: 12px; cursor: pointer; font-family:'Inter',sans-serif;
+      transition: all 0.3s; box-shadow: 0 6px 20px rgba(245,166,35,0.45);
+      letter-spacing: 0.3px; margin-top: 8px;
+    }
+    .btn-descargar-carnet:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(245,166,35,0.55); }
+    .btn-descargar-carnet:active { transform: translateY(0); }
   </style>
 </head>
 <body>
@@ -239,7 +250,18 @@
   <div class="voto-confirmado" id="seccion-voto-emitido">
     <span class="icono-grande">🎉</span>
     <h2>¡Gracias por votar!</h2>
-    <p>Tu voto ha sido registrado de forma anónima y segura.<br>Puedes seguir los resultados en tiempo real a continuación.</p>
+    <p>Tu voto ha sido registrado de forma anónima y segura.<br>Puedes descargar tu comprobante a continuación.</p>
+    
+    <!-- CARNET PREVIEW -->
+    <div style="margin:28px auto;max-width:420px;">
+      <canvas id="canvas-carnet" width="1012" height="638"
+        style="width:100%;border-radius:16px;box-shadow:0 12px 40px rgba(0,53,128,0.3);display:block;"></canvas>
+    </div>
+
+    <button class="btn-descargar-carnet" id="btn-descargar-carnet" onclick="descargarCarnet()">
+      ⬇️ Descargar Carnet de Sufragio
+    </button>
+    <p style="font-size:0.78rem;color:var(--muted);margin-top:8px;">Formato PNG • Tamaño carnet (85.6×54mm)</p>
   </div>
 
   <!-- RESULTADOS EN TIEMPO REAL -->
@@ -393,6 +415,8 @@
     document.getElementById('seccion-votacion').style.display = 'none';
     document.getElementById('box-instrucciones').style.display = 'none';
     document.getElementById('seccion-voto-emitido').style.display = 'block';
+    // Generar carnet con los datos del votante actual
+    setTimeout(() => dibujarCarnet(), 400);
     iniciarResultadosEnVivo();
   }
 
@@ -429,7 +453,251 @@
   // INIT
   cargarInfoVotante().then(() => {
     if (!infoVotante || !infoVotante.ha_votado) cargarCandidatos();
+    else {
+      // Si ya votó al abrir la página, mostrar carnet igual
+      mostrarVotoYaEmitido();
+    }
   });
+
+  // ─── GENERACIÓN DEL CARNET DE SUFRAGIO ───
+  function dibujarCarnet() {
+    const canvas = document.getElementById('canvas-carnet');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width;   // 1012px
+    const H = canvas.height;  // 638px
+
+    // Paño de datos del votante
+    const nombre = (infoVotante && infoVotante.nombre) ? infoVotante.nombre.toUpperCase() : 'VOTANTE';
+    const ci     = (infoVotante && infoVotante.ci)     ? infoVotante.ci : '—';
+    const ahora  = new Date();
+    const fecha  = ahora.toLocaleDateString('es-BO', { day:'2-digit', month:'long', year:'numeric' });
+    const hora   = ahora.toLocaleTimeString('es-BO', { hour:'2-digit', minute:'2-digit' });
+    const folio  = 'CEA-' + ci + '-' + ahora.getFullYear();
+
+    // ─ FONDO PRINCIPAL ─
+    const bgGrad = ctx.createLinearGradient(0, 0, W, H);
+    bgGrad.addColorStop(0,   '#001f5b');
+    bgGrad.addColorStop(0.5, '#003580');
+    bgGrad.addColorStop(1,   '#0d2f6b');
+    ctx.fillStyle = bgGrad;
+    ctx.roundRect(0, 0, W, H, 28);
+    ctx.fill();
+
+    // ─ FRANJA DORADA IZQUIERDA ─
+    const franjaGrad = ctx.createLinearGradient(0, 0, 0, H);
+    franjaGrad.addColorStop(0, '#f5c518');
+    franjaGrad.addColorStop(1, '#e08800');
+    ctx.fillStyle = franjaGrad;
+    ctx.beginPath();
+    ctx.roundRect(0, 0, 14, H, [28, 0, 0, 28]);
+    ctx.fill();
+
+    // ─ FRANJA DORADA DERECHA ─
+    ctx.fillStyle = franjaGrad;
+    ctx.beginPath();
+    ctx.roundRect(W - 14, 0, 14, H, [0, 28, 28, 0]);
+    ctx.fill();
+
+    // ─ PANEL IZQUIERDO (foto / logo area) ─
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.beginPath();
+    ctx.roundRect(30, 30, 230, H - 60, 18);
+    ctx.fill();
+
+    // ─ LOGO CEA (si disponible) ─
+    function dibujarResto(logoImg) {
+      // Logo dentro del panel izquierdo
+      const logoSize = 120;
+      const logoX = 30 + (230 / 2) - logoSize / 2;
+      const logoY = 50;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(logoX + logoSize/2, logoY + logoSize/2, logoSize/2, 0, Math.PI*2);
+      ctx.closePath();
+      ctx.strokeStyle = '#f5c518';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+      ctx.clip();
+      if (logoImg) {
+        ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
+      } else {
+        ctx.fillStyle = '#0056b3';
+        ctx.fill();
+        ctx.fillStyle = '#f5c518';
+        ctx.font = 'bold 36px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('CEA', logoX + logoSize/2, logoY + logoSize/2 + 12);
+      }
+      ctx.restore();
+
+      // Texto debajo del logo
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#f5c518';
+      ctx.font = 'bold 15px Inter, Arial, sans-serif';
+      ctx.fillText('CEA PAILÓN', 30 + 115, logoY + logoSize + 28);
+
+      ctx.fillStyle = 'rgba(255,255,255,0.65)';
+      ctx.font = '11px Inter, Arial, sans-serif';
+      ctx.fillText('Prof. Herman Ortiz Camargo', 30 + 115, logoY + logoSize + 48);
+
+      // SELLO CIRCULAR (estilo oficial)
+      const selX = 30 + 115;
+      const selY = H - 95;
+      const selR = 50;
+
+      // Anillo exterior
+      ctx.beginPath();
+      ctx.arc(selX, selY, selR, 0, Math.PI * 2);
+      ctx.strokeStyle = '#f5c518';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Anillo interior
+      ctx.beginPath();
+      ctx.arc(selX, selY, selR - 10, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(245,197,24,0.4)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Estrella central
+      ctx.fillStyle = '#f5c518';
+      ctx.font = '22px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('★', selX, selY + 8);
+
+      // Texto circular del sello
+      ctx.font = 'bold 9px Inter, Arial, sans-serif';
+      ctx.fillStyle = '#f5c518';
+      const textoSello = 'PROCESO ELECTORAL • ELECCIONES CEA • ';
+      ctx.save();
+      ctx.translate(selX, selY);
+      textoSello.split('').forEach((char, i) => {
+        const angulo = (i / textoSello.length) * Math.PI * 2 - Math.PI / 2;
+        ctx.save();
+        ctx.rotate(angulo);
+        ctx.translate(0, -(selR - 6));
+        ctx.rotate(Math.PI / 2);
+        ctx.fillText(char, 0, 0);
+        ctx.restore();
+      });
+      ctx.restore();
+
+      // ─ PANEL DERECHO (datos) ─
+      const dx = 280;
+      let dy = 55;
+
+      // TÍTULO PRINCIPAL
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#f5c518';
+      ctx.font = 'bold 13px Inter, Arial, sans-serif';
+      ctx.fillText('COMPROBANTE OFICIAL DE SUFRAGIO', dx, dy);
+
+      dy += 26;
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.font = '11px Inter, Arial, sans-serif';
+      ctx.fillText('CENTRO DE EDUCACIÓN ALTERNATIVA • ELECCIONES ESTUDIANTILES', dx, dy);
+
+      // LÍNEA SEPARADORA
+      dy += 18;
+      ctx.beginPath();
+      ctx.moveTo(dx, dy); ctx.lineTo(W - 30, dy);
+      const lineGrad = ctx.createLinearGradient(dx, 0, W - 30, 0);
+      lineGrad.addColorStop(0, '#f5c518');
+      lineGrad.addColorStop(1, 'transparent');
+      ctx.strokeStyle = lineGrad;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      dy += 30;
+
+      // FUNCIÓN AUXILIAR: dibujar campo
+      function campo(label, valor, yPos, grande = false) {
+        ctx.textAlign = 'left';
+        ctx.fillStyle = 'rgba(245,197,24,0.7)';
+        ctx.font = '10px Inter, Arial, sans-serif';
+        ctx.fillText(label.toUpperCase(), dx, yPos);
+
+        ctx.fillStyle = 'white';
+        ctx.font = grande ? 'bold 20px Inter, Arial, sans-serif' : 'bold 14px Inter, Arial, sans-serif';
+        ctx.fillText(valor, dx, yPos + (grande ? 24 : 19));
+        return yPos + (grande ? 52 : 40);
+      }
+
+      dy = campo('Nombre del Votante', nombre, dy, true);
+      dy = campo('Número de C.I.', ci, dy);
+      dy = campo('Fecha de Emisión', fecha, dy);
+      dy = campo('Hora de Votación', hora, dy);
+      dy = campo('Número de Folio', folio, dy);
+
+      // LÍNEA SEPARADORA BAJA
+      dy += 4;
+      ctx.beginPath();
+      ctx.moveTo(dx, dy); ctx.lineTo(W - 30, dy);
+      ctx.strokeStyle = lineGrad;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // FIRMA JEFE DE MESA
+      dy += 20;
+      const firmaDx = dx + 10;
+
+      // Línea de firma
+      ctx.beginPath();
+      ctx.moveTo(firmaDx, dy + 28); ctx.lineTo(firmaDx + 200, dy + 28);
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.font = '10px Inter, Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Firma del Jefe de Mesa', firmaDx + 100, dy + 42);
+
+      // ESTADO OFICIAL
+      const estadoX = W - 165;
+      const estadoY = dy + 5;
+      ctx.fillStyle = 'rgba(22,163,74,0.15)';
+      ctx.strokeStyle = '#16a34a';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(estadoX, estadoY, 140, 36, 8);
+      ctx.fill(); ctx.stroke();
+
+      ctx.fillStyle = '#4ade80';
+      ctx.font = 'bold 13px Inter, Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('✅ VOTO REGISTRADO', estadoX + 70, estadoY + 23);
+
+      // MARCA DE AGUA flotante
+      ctx.save();
+      ctx.globalAlpha = 0.04;
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 160px Arial';
+      ctx.textAlign = 'center';
+      ctx.translate(W/2 + 60, H/2 + 40);
+      ctx.rotate(-0.25);
+      ctx.fillText('CEA', 0, 0);
+      ctx.restore();
+    }
+
+    // Cargar logo e invocar render
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => dibujarResto(img);
+    img.onerror = () => dibujarResto(null);
+    img.src = '../imagenes/logo.jpg';
+  }
+
+  function descargarCarnet() {
+    const canvas = document.getElementById('canvas-carnet');
+    const link = document.createElement('a');
+    const ci = (infoVotante && infoVotante.ci) ? infoVotante.ci : 'votante';
+    link.download = `carnet-sufragio-${ci}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }
 </script>
 </body>
 </html>
