@@ -203,7 +203,10 @@
       <p>Elecciones Estudiantiles — CEA Pailón</p>
     </div>
   </div>
-  <button class="btn-salir" onclick="cerrarSesion()">Salir 🚪</button>
+    <div style="text-align:right;">
+      <p id="connected-server-badge" style="font-size:0.6rem; color:rgba(255,255,255,0.4); margin-bottom:2px;">Conectando...</p>
+      <button class="btn-salir" onclick="cerrarSesion()">Salir 🚪</button>
+    </div>
 </header>
 
 <main>
@@ -1012,8 +1015,18 @@
   cargarStats();
   cargarElecciones();
   cargarEstadoBanner();
+  
+  if (typeof getConnectedUrl === 'function') {
+      document.getElementById('connected-server-badge').textContent = '📡 Servidor: ' + getConnectedUrl();
+  }
+
   setInterval(cargarStats, 8000);
   setInterval(cargarEstadoBanner, 10000);
+  setInterval(() => {
+      if (typeof getConnectedUrl === 'function') {
+          document.getElementById('connected-server-badge').textContent = '📡 Servidor: ' + getConnectedUrl();
+      }
+  }, 5000);
 </script>
 </body>
 </html>

@@ -46,9 +46,15 @@ async function descubrirBackend() {
 
 // Intentar descubrir si el actual falla
 async function apiFetch(endpoint, options = {}) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout total
+  
   try {
     options.headers = getAuthHeaders();
+    options.signal = controller.signal;
+    
     let res = await fetch(`${API_URL}${endpoint}`, options);
+    clearTimeout(timeoutId);
 
     if (res.status === 401) {
       console.warn("🔐 Sesión expirada.");
@@ -58,6 +64,11 @@ async function apiFetch(endpoint, options = {}) {
     }
     return res;
   } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+        console.error("⏱️ Tiempo de espera agotado.");
+    }
+    
     console.error("🚨 Error de conexión, reintentando descubrimiento...");
     const encontrado = await descubrirBackend();
     if (encontrado) {
@@ -66,9 +77,13 @@ async function apiFetch(endpoint, options = {}) {
     return { 
         ok: false, 
         status: 503, 
-        json: async () => ({ detail: "Error técnico: El servidor no responde. Por favor asegúrate de que el 'Web Service' en Render esté ACTIVO." }) 
+        json: async () => ({ detail: "El servidor está tardando demasiado en responder o está fuera de línea." }) 
     };
   }
+}
+
+function getConnectedUrl() {
+    return API_URL;
 }
 
 function redirigirPorRol(rol) {
