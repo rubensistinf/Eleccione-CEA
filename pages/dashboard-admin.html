@@ -289,10 +289,10 @@
             <input type="number" id="mesa-eleccion-id" placeholder="Ej: 1" oninput="cargarMesas()">
           </div>
           <div class="form-group">
-            <label>Número de Mesa</label>
-            <input type="number" id="mesa-numero" placeholder="Ej: 1">
+            <label>Cantidad de Mesas a crear</label>
+            <input type="number" id="mesa-cantidad" placeholder="Ej: 5">
           </div>
-          <button class="btn-action btn-naranja" onclick="crearMesa()">➕ Crear Mesa</button>
+          <button class="btn-action btn-naranja" onclick="crearMesa()">➕ Generar Mesas</button>
           <div class="msg-box" id="msg-mesa"></div>
 
           <div style="margin-top:18px;">
@@ -324,13 +324,7 @@
             <div style="font-size:0.88rem;font-weight:700;margin-top:2px;" id="jefe-nombre-preview">—</div>
             <div style="font-size:0.72rem;color:var(--muted);" id="jefe-ci-preview">—</div>
           </div>
-          <div class="form-group">
-            <label>Asignar a Mesa</label>
-            <select id="asig-mesa-id">
-              <option value="">— Carga las mesas primero (✏️ izquierda) —</option>
-            </select>
-          </div>
-          <button class="btn-action btn-naranja" onclick="asignarJefeCI()">✅ Designar Jefe de Mesa</button>
+          <button class="btn-action btn-naranja" onclick="asignarJefeCI()">🤖 Asignar automáticamente a Mesa Libre</button>
           <div class="msg-box" id="msg-jefe"></div>
         </div>
       </div>
@@ -542,15 +536,16 @@
   // ─── MESAS ───
   async function crearMesa() {
     const eleccion_id = parseInt(document.getElementById('mesa-eleccion-id').value);
-    const numero = parseInt(document.getElementById('mesa-numero').value);
-    if (!eleccion_id || !numero) { mostrarMsg('msg-mesa','❌ Completa los campos.','error'); return; }
-    const r = await apiFetch('/admin/mesas', { method:'POST', body:JSON.stringify({ eleccion_id, numero }) });
+    const cantidad = parseInt(document.getElementById('mesa-cantidad').value);
+    if (!eleccion_id || !cantidad) { mostrarMsg('msg-mesa','❌ Completa los campos.','error'); return; }
+    const r = await apiFetch('/admin/mesas', { method:'POST', body:JSON.stringify({ eleccion_id, cantidad }) });
     if (r && r.ok) {
-      mostrarMsg('msg-mesa', `✅ Mesa N° ${numero} creada.`, 'ok');
-      document.getElementById('mesa-numero').value = '';
+      const d = await r.json();
+      mostrarMsg('msg-mesa', `✅ ${d.msg}`, 'ok');
+      document.getElementById('mesa-cantidad').value = '';
       cargarMesas();
       cargarStats();
-    } else mostrarMsg('msg-mesa','❌ Error.','error');
+    } else mostrarMsg('msg-mesa','❌ Error al generar mesas.','error');
   }
 
   async function cargarMesas() {
@@ -558,12 +553,10 @@
     if (!eleccion_id) return;
     const r = await apiFetch(`/admin/mesas/${eleccion_id}`, { method:'GET' });
     const cont = document.getElementById('lista-mesas');
-    const sel = document.getElementById('asig-mesa-id');
     if (r && r.ok) {
       const data = await r.json();
       if (!data.length) {
         cont.innerHTML = '<div style="color:var(--muted);font-size:0.8rem;">No hay mesas creadas.</div>';
-        sel.innerHTML = '<option value="">No hay mesas</option>';
         return;
       }
       cont.innerHTML = data.map(m => `
@@ -573,13 +566,21 @@
             <strong>Mesa N° ${m.numero}</strong>
             <span>${m.jefe ? '👤 ' + m.jefe : '<span style="color:var(--naranja);">Sin jefe</span>'} · ${m.total_votantes} votante(s)</span>
           </div>
-          <div style="font-size:0.7rem;color:var(--muted);">ID: ${m.id}</div>
+          <button onclick="eliminarMesa(${m.id})" style="background:none;border:none;cursor:pointer;font-size:1.1rem;opacity:0.6;transition:opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'" title="Eliminar Mesa y Jefe">🗑️</button>
         </div>`).join('');
-      sel.innerHTML = data.map(m => `<option value="${m.id}">Mesa N° ${m.numero} — ${m.total_votantes} votantes</option>`).join('');
 
       // Marcar paso 2 como done si hay mesas
-      if (data.length) document.getElementById('step-2').classList.add('done');
+      document.getElementById('step-2').classList.add('done');
     }
+  }
+
+  async function eliminarMesa(mesa_id) {
+    if(!confirm('¿Estás seguro de eliminar esta mesa? Los votantes asignados a ella quedarán sin mesa y el jefe perderá su puesto.')) return;
+    const r = await apiFetch(`/admin/mesas/${mesa_id}`, { method:'DELETE' });
+    if (r && r.ok) {
+      cargarMesas();
+      cargarStats();
+    } else alert('Error al eliminar mesa.');
   }
 
   async function buscarJefePorCI() {
@@ -600,9 +601,9 @@
 
   async function asignarJefeCI() {
     const ci = document.getElementById('jefe-ci').value.trim();
-    const mesa_id = parseInt(document.getElementById('asig-mesa-id').value);
-    if (!ci || !mesa_id) { mostrarMsg('msg-jefe','❌ Busca un CI y elige una mesa.','error'); return; }
-    const r = await apiFetch('/admin/asignar-jefe-ci', { method:'POST', body:JSON.stringify({ ci, mesa_id }) });
+    const eleccion_id = parseInt(document.getElementById('mesa-eleccion-id').value);
+    if (!ci || !eleccion_id) { mostrarMsg('msg-jefe','❌ Asegúrate de buscar un CI y tener un ID de Elección en la columna izquierda.','error'); return; }
+    const r = await apiFetch('/admin/asignar-jefe-ci', { method:'POST', body:JSON.stringify({ ci, eleccion_id }) });
     if (r && r.ok) {
       const d = await r.json();
       mostrarMsg('msg-jefe', d.msg, 'ok');
