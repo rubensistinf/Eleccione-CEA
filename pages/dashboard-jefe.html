@@ -114,6 +114,15 @@
     </header>
 
     <div class="container">
+        <!-- BANNER DE IDENTIDAD PRO -->
+        <div style="background: linear-gradient(135deg, var(-- azul), #00255c); border: 2px solid var(--dorado); border-radius: 12px; padding: 15px; margin-bottom: 25px; color: white; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <div style="font-size: 2rem;">🛡️</div>
+            <div>
+                <h2 style="font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;">Modo Jurado de Mesa</h2>
+                <p style="font-size: 0.75rem; color: rgba(255,255,255,0.7);">Habilita a los estudiantes para que puedan emitir su voto digital.</p>
+            </div>
+        </div>
+
         <div class="card">
             <span class="card-icon">🪪</span>
             <h2>Habilitar Estudiante</h2>
@@ -135,10 +144,14 @@
 
     <script src="../js/api.js"></script>
     <script>
-        // Protección de ruta
-        if(localStorage.getItem('user_rol') !== 'jefe' && localStorage.getItem('user_rol') !== 'admin') {
-            window.location.href = '../index.html';
-        }
+        // Protección de ruta "Nivel Pro"
+        (function() {
+            const rol = localStorage.getItem('user_rol');
+            if(rol !== 'jefe' && rol !== 'admin') {
+                console.warn("Acceso denegado. Rol:", rol);
+                window.location.href = window.location.origin + '/index.html';
+            }
+        })();
 
         async function consultar() {
             const ci = document.getElementById('ci-votante').value.trim();

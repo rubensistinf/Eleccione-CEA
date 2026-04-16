@@ -473,7 +473,14 @@
 
 <script src="../js/api.js"></script>
 <script>
-  if (localStorage.getItem('user_rol') !== 'admin') cerrarSesion();
+  // Protección de ruta "Nivel Pro"
+  (function() {
+    const rol = localStorage.getItem('user_rol');
+    if (rol !== 'admin') {
+        console.warn("Acceso denegado. Rol:", rol);
+        window.location.href = window.location.origin + '/index.html';
+    }
+  })();
 
   let activeEleccionId = localStorage.getItem('active_eleccion_id') || null;
 
@@ -652,6 +659,7 @@
           </div>
           <span class="badge-estado ${e.activa ? 'badge-abierta':'badge-cerrada'}">${e.activa ? '🟢 Abierta':'🔴 Cerrada'}</span>
           <div style="display:flex; gap:6px;">
+            <button class="btn-toggle-mini" style="background:var(--azul);color:white;" onclick="gestionarEleccionLocal(${e.id})">📂 Gestionar</button>
             <button class="btn-toggle-mini ${e.activa ? 'cerrar':'abrir'}" onclick="toggleEleccion(${e.id})">${e.activa ? 'Cerrar':'Abrir'}</button>
             <button class="btn-toggle-mini" style="background:#fef2f2;color:#ef4444;border:1px solid #fca5a5;" onclick="eliminarEleccion(${e.id})" title="Borrar Elección y reiniciar el sistema">🗑️</button>
           </div>
@@ -666,6 +674,14 @@
     cargarEstadoBanner();
     document.querySelector('.step.done')?.classList.remove('done');
     document.getElementById('step-1').classList.add('done');
+  }
+
+  function gestionarEleccionLocal(id) {
+    actualizarIDGlobal(id);
+    cargarEstadoBanner();
+    cargarStats();
+    activarTab(2); // Saltamos a mesas/jefes para continuar el flujo
+    mostrarMsg('msg-eleccion', `📂 Cambiaste a gestionar Elección ID #${id}`, 'info');
   }
 
   async function eliminarEleccion(id) {

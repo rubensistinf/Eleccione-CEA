@@ -368,10 +368,16 @@
   }
 
   function redirigirPorRol(rol) {
-    if (rol === 'admin') window.location.href = '/pages/dashboard-admin.html';
-    else if (rol === 'secretaria') window.location.href = '/pages/dashboard-secretaria.html';
-    else if (rol === 'jefe') window.location.href = '/pages/dashboard-jefe.html';
-    else window.location.href = '/pages/dashboard-votante.html';
+    console.log("Iniciando redirección para rol:", rol);
+    const base = window.location.origin;
+    if (rol === 'admin') window.location.href = base + '/pages/dashboard-admin.html';
+    else if (rol === 'secretaria') window.location.href = base + '/pages/dashboard-secretaria.html';
+    else if (rol === 'jefe') window.location.href = base + '/pages/dashboard-jefe.html';
+    else if (rol === 'votante') window.location.href = base + '/pages/dashboard-votante.html';
+    else {
+        alert("Rol desconocido: " + rol);
+        window.location.href = base + '/index.html';
+    }
   }
 
   // Presionar ENTER en CI

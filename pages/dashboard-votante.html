@@ -302,8 +302,14 @@
 
 <script src="../js/api.js"></script>
 <script>
-  const rol = localStorage.getItem('user_rol');
-  if (rol !== 'votante' && rol !== 'jefe') cerrarSesion();
+  // Protección de ruta "Nivel Pro"
+  (function() {
+    const rol = localStorage.getItem('user_rol');
+    if (rol !== 'votante' && rol !== 'jefe' && rol !== 'admin') {
+      console.warn("Acceso denegado. Rol:", rol);
+      window.location.href = window.location.origin + '/index.html';
+    }
+  })();
 
   let candidatoSeleccionado = null;
   let eleccionIdGlobal = null;
