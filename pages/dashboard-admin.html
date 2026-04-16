@@ -664,6 +664,8 @@
             <button class="btn-toggle-mini" style="background:#fef2f2;color:#ef4444;border:1px solid #fca5a5;" onclick="eliminarEleccion(${e.id})" title="Borrar Elección y reiniciar el sistema">🗑️</button>
           </div>
         </div>`).join('');
+    } else {
+        cont.innerHTML = '<div style="color:var(--rojo);font-size:0.82rem;text-align:center;padding:16px;">❌ Error al conectar con el servidor. <br><small>Revisa tu conexión o espera a que Render reinicie el servicio.</small></div>';
     }
   }
 
