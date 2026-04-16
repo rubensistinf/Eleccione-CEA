@@ -207,13 +207,16 @@
 
 <header>
   <div class="header-left">
-    <img src="../imagenes/logo.jpg" alt="Logo" class="header-logo" onerror="this.src='https://placehold.co/44x44/003580/f5a623?text=CEA'">
+    <img src="../img/logo.png" alt="Logo" class="header-logo" onerror="this.src='https://placehold.co/44x44/003580/f5a623?text=CEA'">
     <div>
-      <h1>Papeleta Digital — CEA Pailón</h1>
+      <h1 style="font-size:1.1rem; line-height:1;">Papeleta Digital <span style="font-size:0.6rem; background:rgba(255,255,255,0.2); padding:2px 6px; border-radius:10px; vertical-align:middle; font-weight:normal; margin-left:5px;">v2.0 Stable</span></h1>
       <p id="nombre-votante-header">Cargando información...</p>
     </div>
   </div>
-  <button class="btn-salir" onclick="cerrarSesion()">Salir 🚪</button>
+  <div style="text-align:right; display:flex; align-items:center; gap:15px;">
+    <p id="connected-server-badge" style="font-size:0.6rem; color:rgba(255,255,255,0.4);">Conectando...</p>
+    <button class="btn-salir" onclick="cerrarSesion()">Salir 🚪</button>
+  </div>
 </header>
 
 <main>
@@ -282,6 +285,13 @@
     </div>
     <div id="resultados-box"></div>
   </div>
+  <!-- DEBUG MONITOR -->
+  <div style="margin-top:40px; border-top:1px solid rgba(0,0,0,0.05); padding-top:20px;">
+    <h4 style="font-size:0.75rem; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:1px;">🛰️ Monitor de Sistema en Tiempo Real</h4>
+    <div id="debug-monitor" style="background:#1e293b; color:#94a3b8; font-family:monospace; font-size:0.65rem; padding:12px; border-radius:8px; height:100px; overflow-y:auto; line-height:1.5; border:1px solid #334155;">
+      [Sistema] Esperando actividad...
+    </div>
+  </div>
 </main>
 
 <!-- MODAL CONFIRMACIÓN -->
@@ -302,6 +312,15 @@
 
 <script src="../js/api.js"></script>
 <script>
+  if (typeof getConnectedUrl === 'function') {
+      document.getElementById('connected-server-badge').textContent = '📡 Servidor: ' + getConnectedUrl();
+  }
+  setInterval(() => {
+    if (typeof getConnectedUrl === 'function') {
+      document.getElementById('connected-server-badge').textContent = '📡 Servidor: ' + getConnectedUrl();
+    }
+  }, 5000);
+
   // Protección de ruta "Nivel Pro"
   (function() {
     const rol = localStorage.getItem('user_rol');
