@@ -1,92 +1,213 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard Jefe de Mesa</title>
-  <link rel="stylesheet" href="../css/styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mesa de Votación — CEA Pailón</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --azul: #003580;
+            --azul-claro: #0056b3;
+            --dorado: #f5a623;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding-bottom: 40px; }
+
+        .header {
+            background: linear-gradient(135deg, var(--azul) 0%, #001f5b 100%);
+            padding: 16px 24px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: sticky; top: 0; z-index: 100;
+        }
+
+        .header h1 { font-size: 1.2rem; font-weight: 700; }
+        .btn-salir {
+            background: rgba(255,255,255,0.1);
+            color: white; border: 1px solid rgba(255,255,255,0.2);
+            padding: 8px 16px; border-radius: 8px; cursor: pointer;
+            font-size: 0.85rem; font-weight: 600; transition: all 0.2s;
+        }
+        .btn-salir:hover { background: var(--error); border-color: var(--error); }
+
+        .container { max-width: 600px; margin: 40px auto; padding: 0 20px; }
+
+        .card {
+            background: var(--card);
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 10px 30px rgba(0,53,128,0.08);
+            border: 1px solid rgba(0,53,128,0.05);
+            text-align: center;
+        }
+
+        .card-icon {
+            font-size: 3rem; margin-bottom: 16px;
+            display: inline-block;
+            background: #f0f4ff;
+            width: 80px; height: 80px;
+            line-height: 80px; border-radius: 50%;
+        }
+
+        h2 { font-size: 1.5rem; margin-bottom: 12px; color: var(--azul); }
+        p.subtitle { color: #64748b; margin-bottom: 30px; line-height: 1.5; font-size: 0.95rem; }
+
+        .form-group { margin-bottom: 24px; text-align: left; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 8px; }
+        
+        input {
+            width: 100%; padding: 14px 18px; border: 2px solid #e2e8f0; border-radius: 12px;
+            font-size: 1.1rem; font-family: 'Inter', sans-serif; transition: all 0.2s;
+            background: #fdfdfd; text-align: center; font-weight: 700; letter-spacing: 1px;
+        }
+        input:focus { outline: none; border-color: var(--azul); box-shadow: 0 0 0 4px rgba(0,53,128,0.1); }
+
+        .btn-primary {
+            width: 100%; padding: 16px; background: var(--azul); color: white;
+            border: none; border-radius: 12px; font-size: 1rem; font-weight: 700;
+            cursor: pointer; transition: all 0.3s; margin-bottom: 12px;
+        }
+        .btn-primary:hover { background: var(--azul-claro); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,53,128,0.2); }
+
+        .btn-success {
+            width: 100%; padding: 16px; background: var(--success); color: white;
+            border: none; border-radius: 12px; font-size: 1rem; font-weight: 700;
+            cursor: pointer; transition: all 0.3s; display: none;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.4); } 70% { box-shadow: 0 0 0 10px rgba(16,185,129,0); } 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } }
+
+        .info-panel {
+            margin-top: 30px; padding: 20px; border-radius: 12px;
+            background: #f1f5f9; min-height: 60px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border: 1px dashed #cbd5e1;
+        }
+
+        .status-badge {
+            display: inline-block; padding: 4px 12px; border-radius: 20px;
+            font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+            margin-top: 8px;
+        }
+
+        .mesa-tag {
+            background: var(--azul); color: white; padding: 2px 8px; 
+            border-radius: 6px; font-size: 0.85rem; margin-left: 6px;
+        }
+    </style>
 </head>
 <body>
-  <header class="main-header">
-    <div class="header-content">
-      <div class="header-left">
-        <h1>Mesa de Votación</h1>
-      </div>
-      <nav>
-        <button onclick="cerrarSesion()" style="background:transparent; color:white; border:none; cursor:pointer; font-weight:bold;">Cerrar Sesión</button>
-      </nav>
-    </div>
-  </header>
-  <main style="padding: 20px; text-align: center;">
-    
-    <div style="background: #f9f9f9; padding: 30px; border-radius: 8px; max-width: 500px; margin: 40px auto;">
-      <h3>Habilitar Votante para Sufragio</h3>
-      <p style="color:#555; margin-bottom: 20px;">Ingrese el C.I. del estudiante que se presentó en la mesa con su documento de identidad.</p>
-      
-      <input type="text" id="ci-votante" placeholder="Nro. C.I. del Votante" style="width:80%; padding:10px; margin-bottom:20px; font-size: 16px;"><br>
-      
-      <button onclick="consultar()" style="padding:10px 20px; background: #28a745; color: white;">Consultar Votante</button>
-      <button onclick="validar()" style="padding:10px 20px; background: #0056b3; color: white; display: none;" id="btn-habilitar">HABILITAR VOTANTE</button>
-      
-      <div id="info-votante" style="margin-top:20px; font-weight: bold; font-size: 18px;"></div>
+    <header class="header">
+        <h1>🗳️ Control de Mesa</h1>
+        <button class="btn-salir" onclick="cerrarSesion()">Cerrar Sesión</button>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <span class="card-icon">🪪</span>
+            <h2>Habilitar Estudiante</h2>
+            <p class="subtitle">Verifique el C.I. físico del estudiante antes de autorizar su sufragio digital.</p>
+
+            <div class="form-group">
+                <label>Número de C.I.</label>
+                <input type="text" id="ci-votante" placeholder="0000000" maxlength="15">
+            </div>
+
+            <button class="btn-primary" onclick="consultar()" id="btn-consultar">Consultar Padrón</button>
+            <button class="btn-success" onclick="validar()" id="btn-habilitar">HABILITAR PARA VOTAR</button>
+
+            <div id="info-votante" class="info-panel">
+                <span id="label-info" style="color: #64748b; font-size: 0.9rem;">Esperando C.I...</span>
+            </div>
+        </div>
     </div>
 
-  </main>
-  
-  <script src="../js/api.js"></script>
-  <script>
-    if(localStorage.getItem('user_rol') !== 'jefe' && localStorage.getItem('user_rol') !== 'admin') cerrarSesion();
+    <script src="../js/api.js"></script>
+    <script>
+        // Protección de ruta
+        if(localStorage.getItem('user_rol') !== 'jefe' && localStorage.getItem('user_rol') !== 'admin') {
+            window.location.href = '../index.html';
+        }
 
-    async function consultar() {
-        const ci = document.getElementById('ci-votante').value;
-        const msg = document.getElementById('info-votante');
-        const btnHabilitar = document.getElementById('btn-habilitar');
-        
-        btnHabilitar.style.display = 'none';
-        
-        const res = await apiFetch(`/jefe/votante/${ci}`, { method: 'GET' });
-        if(res){
-            if(res.ok) {
+        async function consultar() {
+            const ci = document.getElementById('ci-votante').value.trim();
+            const panel = document.getElementById('info-votante');
+            const label = document.getElementById('label-info');
+            const btnHabilitar = document.getElementById('btn-habilitar');
+            const btnConsultar = document.getElementById('btn-primary');
+            
+            if(!ci) return;
+            
+            label.innerText = "Buscando...";
+            btnHabilitar.style.display = 'none';
+            
+            const res = await apiFetch(`/jefe/votante/${ci}`);
+            if(res && res.ok) {
                 const data = await res.json();
+                panel.style.background = "#fff";
+                panel.style.borderStyle = "solid";
+
                 if(data.ha_votado) {
-                    msg.style.color = "red";
-                    msg.innerHTML = `El estudiante <b>${data.nombre}</b> YA HA VOTADO.<br><span style="font-size:0.8em;color:#555;">Pertenece a la Mesa N° ${data.mesa}</span>`;
+                    panel.style.borderColor = "var(--error)";
+                    label.style.color = "var(--error)";
+                    label.innerHTML = `⚠️ <b>${data.nombre}</b><br>YA REALIZÓ SU VOTO EN MESA ${data.mesa}`;
                 } else if(data.habilitado) {
-                    msg.style.color = "orange";
-                    msg.innerHTML = `El estudiante <b>${data.nombre}</b> ya está habilitado esperando a votar.<br><span style="font-size:0.8em;color:#555;">Pertenece a la Mesa N° ${data.mesa}</span>`;
+                    panel.style.borderColor = "var(--warning)";
+                    label.style.color = "var(--warning)";
+                    label.innerHTML = `⌛ <b>${data.nombre}</b><br>YA ESTÁ HABILITADO. Pendiente en Mesa ${data.mesa}`;
                 } else {
-                    msg.style.color = "green";
-                    msg.innerHTML = `<b>${data.nombre}</b> encontrado.<br><span style="font-weight:900;font-size:1.1em;color:blue;">Pertenece a la Mesa N° ${data.mesa}</span><br>Autorice su voto si corresponde a la mesa actual.`;
-                    btnHabilitar.style.display = 'inline-block';
+                    panel.style.borderColor = "var(--success)";
+                    label.style.color = "var(--success)";
+                    label.innerHTML = `✅ <b>${data.nombre}</b><br>Votante en <span class="mesa-tag">Mesa ${data.mesa}</span>`;
+                    btnHabilitar.style.display = 'block';
                 }
             } else {
-                const err = await res.json();
-                msg.style.color = "red";
-                msg.innerText = err.detail || "No se encontró el votante en el padrón.";
+                panel.style.background = "#fef2f2";
+                panel.style.borderColor = "#fecaca";
+                label.style.color = "var(--error)";
+                label.innerText = "❌ Estudiante no encontrado o no asignado a esta elección.";
             }
         }
-    }
 
-    async function validar() {
-        const ci = document.getElementById('ci-votante').value;
-        const msg = document.getElementById('info-votante');
-        const btnHabilitar = document.getElementById('btn-habilitar');
-        
-        const res = await apiFetch(`/jefe/validar-votante?ci=${ci}`, { method: 'POST' });
-        if(res) {
-            if(res.ok) {
+        async function validar() {
+            const ci = document.getElementById('ci-votante').value.trim();
+            const label = document.getElementById('label-info');
+            const btnHabilitar = document.getElementById('btn-habilitar');
+            
+            const res = await apiFetch(`/jefe/validar-votante?ci=${ci}`, { method: 'POST' });
+            if(res && res.ok) {
                 const data = await res.json();
-                msg.style.color = "green";
-                msg.innerText = `VOTANTE HABILITADO.\nPuede dirigirse al cuarto oscuro.\nCorreo login: ${data.correo_login}`;
+                label.innerHTML = `<span style="font-size:1.2rem;">🌟 ¡HABILITADO!</span><br>Indique al estudiante que ya puede ingresar con su CI.`;
                 btnHabilitar.style.display = 'none';
                 document.getElementById('ci-votante').value = '';
+                
+                // Micro animación de éxito
+                document.querySelector('.card').style.background = "#f0fff4";
+                setTimeout(() => { document.querySelector('.card').style.background = "#fff"; }, 2000);
             } else {
                 const err = await res.json();
-                msg.style.color = "red";
-                msg.innerText = err.detail;
+                label.innerText = "❌ " + (err.detail || "Error al habilitar.");
             }
         }
-    }
-  </script>
+
+        function cerrarSesion() {
+            localStorage.clear();
+            window.location.href = '../index.html';
+        }
+
+        document.getElementById('ci-input')?.addEventListener('keydown', e => { if(e.key==='Enter') consultar(); });
+    </script>
 </body>
 </html>
+

@@ -291,8 +291,11 @@
       const data = await res.json();
       if (res.ok) {
         localStorage.setItem('jwt_token', data.access_token);
-        localStorage.setItem('user_rol', 'votante');
-        window.location.href = '/pages/dashboard-votante.html';
+        // Decodificar el JWT para obtener el rol real (puede ser 'jefe' o 'admin' también)
+        const payload = JSON.parse(atob(data.access_token.split('.')[1]));
+        const rol = payload.rol;
+        localStorage.setItem('user_rol', rol);
+        redirigirPorRol(rol);
       } else {
         mostrarMensaje('❌ ' + (data.detail || 'CI no encontrado en el padrón.'), 'error');
       }
@@ -362,6 +365,13 @@
     } catch(e) {
       document.getElementById('grid-candidatos-publicos').innerHTML = '<div class="cargando-candidatos">No se pudo conectar al servidor.</div>';
     }
+  }
+
+  function redirigirPorRol(rol) {
+    if (rol === 'admin') window.location.href = '/pages/dashboard-admin.html';
+    else if (rol === 'secretaria') window.location.href = '/pages/dashboard-secretaria.html';
+    else if (rol === 'jefe') window.location.href = '/pages/dashboard-jefe.html';
+    else window.location.href = '/pages/dashboard-votante.html';
   }
 
   // Presionar ENTER en CI
