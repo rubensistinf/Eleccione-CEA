@@ -50,18 +50,19 @@
                 const data = await res.json();
                 if(data.ha_votado) {
                     msg.style.color = "red";
-                    msg.innerText = `El estudiante ${data.nombre} YA HA VOTADO.`;
+                    msg.innerHTML = `El estudiante <b>${data.nombre}</b> YA HA VOTADO.<br><span style="font-size:0.8em;color:#555;">Pertenece a la Mesa N° ${data.mesa}</span>`;
                 } else if(data.habilitado) {
                     msg.style.color = "orange";
-                    msg.innerText = `El estudiante ${data.nombre} ya está habilitado esperando a votar.`;
+                    msg.innerHTML = `El estudiante <b>${data.nombre}</b> ya está habilitado esperando a votar.<br><span style="font-size:0.8em;color:#555;">Pertenece a la Mesa N° ${data.mesa}</span>`;
                 } else {
                     msg.style.color = "green";
-                    msg.innerText = `${data.nombre} encontrado. Autorice su voto.`;
+                    msg.innerHTML = `<b>${data.nombre}</b> encontrado.<br><span style="font-weight:900;font-size:1.1em;color:blue;">Pertenece a la Mesa N° ${data.mesa}</span><br>Autorice su voto si corresponde a la mesa actual.`;
                     btnHabilitar.style.display = 'inline-block';
                 }
             } else {
+                const err = await res.json();
                 msg.style.color = "red";
-                msg.innerText = "No se encontró el votante en el padrón.";
+                msg.innerText = err.detail || "No se encontró el votante en el padrón.";
             }
         }
     }
