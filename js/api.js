@@ -1,16 +1,21 @@
-// SISTEMA DE CONTROL DE VERSIONES - FUERZA RECARGA DE CACHE
-const SYSTEM_VERSION = "2.0.1";
+// SISTEMA DE CONTROL DE VERSIONES - FUERZA RECARGA DE CACHE PARA V2.2 (ELIMINAR FANTASMA)
+const SYSTEM_VERSION = "2.2.0";
 if (localStorage.getItem("cea_v") !== SYSTEM_VERSION) {
+    // ELIMINAR EL SERVIDOR FANTASMA CON "S" SI EXISTE
+    const oldUrl = localStorage.getItem("custom_api_url");
+    if (oldUrl && oldUrl.includes("elecciones-cea-backend")) {
+        console.log("👻 Fantasma detectado, purgando...");
+        localStorage.removeItem("custom_api_url");
+    }
     localStorage.setItem("cea_v", SYSTEM_VERSION);
     location.reload(true);
 }
 
 const POSSIBLE_BACKENDS = [
     localStorage.getItem("custom_api_url"),
-    "https://eleccione-cea-backend.onrender.com", // PRIORIDAD 1: Estable e Instantáneo
-    "https://votacion-cea-backend.onrender.com",
+    "https://eleccione-cea-backend.onrender.com", // SIN "S" - EL BUENO
     window.location.origin,
-    "https://votacion-backend.onrender.com"
+    "https://votacion-cea-backend.onrender.com"
 ].filter(Boolean);
 
 let API_URL = POSSIBLE_BACKENDS[0] || "https://eleccione-cea-backend.onrender.com";
