@@ -50,6 +50,7 @@ async function apiFetch(endpoint, options = {}) {
   const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout total
   
   try {
+    debugLog(`📡 Pidiendo: ${endpoint}...`);
     options.headers = getAuthHeaders();
     options.signal = controller.signal;
     
@@ -57,21 +58,26 @@ async function apiFetch(endpoint, options = {}) {
     clearTimeout(timeoutId);
 
     if (res.status === 401) {
-      console.warn("🔐 Sesión expirada.");
+      debugLog(`🔐 401: Sesión expirada.`);
       localStorage.removeItem("jwt_token");
       localStorage.removeItem("user_rol");
       window.location.href = "/index.html";
     }
+    debugLog(`✅ Respuesta: ${res.status}`);
     return res;
   } catch (err) {
     clearTimeout(timeoutId);
     if (err.name === 'AbortError') {
-        console.error("⏱️ Tiempo de espera agotado.");
+        debugLog(`⏱️ Tiempo agotado (20s) en ${endpoint}`);
+    } else {
+        debugLog(`🚨 Error de red en ${endpoint}`);
     }
     
     console.error("🚨 Error de conexión, reintentando descubrimiento...");
+    debugLog("🔍 Reintentando autoconexión...");
     const encontrado = await descubrirBackend();
     if (encontrado) {
+        debugLog("✨ ¡Reconectado! Reintentando petición...");
         return apiFetch(endpoint, options); // Reintento con la nueva URL
     }
     return { 
@@ -80,6 +86,16 @@ async function apiFetch(endpoint, options = {}) {
         json: async () => ({ detail: "El servidor está tardando demasiado en responder o está fuera de línea." }) 
     };
   }
+}
+
+function debugLog(msg) {
+    console.log("[DEBUG]", msg);
+    const el = document.getElementById('debug-monitor');
+    if (el) {
+        const time = new Date().toLocaleTimeString();
+        el.innerHTML = `<div style="border-bottom:1px solid #334155; padding:2px 0;"><span style="color:#64748b;">[${time}]</span> ${msg}</div>` + el.innerHTML;
+        if (el.innerHTML.length > 3000) el.innerHTML = el.innerHTML.substring(0, 3000);
+    }
 }
 
 function getConnectedUrl() {
