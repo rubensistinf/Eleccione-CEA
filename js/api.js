@@ -1,8 +1,9 @@
-// Si el frontend está alojado en el mismo dominio, usamos cadena vacía para ruta relativa o se define hardcoded el del servidor.
-// Para este proyecto alojaremos frontend en Render Static Site y Backend en Render Web Service.
-const API_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" 
+const DEFAULT_BACKEND_URL = "https://elecciones-cea-backend.onrender.com";
+const API_URL = localStorage.getItem("custom_api_url") || (
+    window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" 
     ? "http://localhost:10000" 
-    : "https://eleccione-cea-backend.onrender.com"; // <-- DIRECCIÓN EN SINGULAR DETECTADA
+    : DEFAULT_BACKEND_URL
+);
 
 // Utilidad para extraer encabezados con JWT
 function getAuthHeaders() {

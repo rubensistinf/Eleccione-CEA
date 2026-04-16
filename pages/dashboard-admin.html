@@ -489,6 +489,18 @@
             <p style="font-size:0.75rem; color:var(--muted); margin-bottom:8px;">¿Errores de conexión o listas que no cargan? Usa esta herramienta para forzar la creación de columnas faltantes.</p>
             <button class="btn-action btn-azul" onclick="repararBaseDatos()" style="width:auto; padding:10px 20px; background:var(--azul); border:none;">🔧 Reparar Base de Datos (Esquema)</button>
           </div>
+
+          <!-- CONFIGURACIÓN DE URL DE BACKEND -->
+          <div style="margin-top:20px; border-top:1px solid #e2e8f0; padding-top:20px;">
+            <h4 style="font-size:0.85rem; margin-bottom:8px; color:var(--azul);">🔌 Configuración de Conexión (Ajuste de URL)</h4>
+            <p style="font-size:0.75rem; color:var(--muted); margin-bottom:12px;">Si ves "Problema de Conexión", pega aquí la URL que te da Render para tu servicio de Backend.</p>
+            <div class="form-group" style="display:flex; gap:8px; align-items:center;">
+              <input type="text" id="custom-api-url" style="font-size:0.8rem; flex:1;" placeholder="https://tu-backend.onrender.com">
+              <button class="btn-action btn-azul" onclick="guardarConfigAPI()" style="width:auto; padding:8px 16px; margin:0; background:#334155;">💾 Guardar y Conectar</button>
+            </div>
+            <p id="msg-config-api" style="font-size:0.7rem; margin-top:6px;"></p>
+          </div>
+
           <div class="msg-box" id="msg-reset"></div>
         </div>
       </div>
@@ -500,6 +512,25 @@
 
 <script src="../js/api.js"></script>
 <script>
+  // Funciones de Configuración de API
+  document.addEventListener('DOMContentLoaded', () => {
+      const savedUrl = localStorage.getItem('custom_api_url');
+      if (savedUrl) document.getElementById('custom-api-url').value = savedUrl;
+      else document.getElementById('custom-api-url').value = "https://elecciones-cea-backend.onrender.com";
+  });
+
+  function guardarConfigAPI() {
+      const url = document.getElementById('custom-api-url').value.trim();
+      if (!url) {
+          localStorage.removeItem('custom_api_url');
+          alert("✓ Se usará la URL por defecto del sistema.");
+      } else {
+          localStorage.setItem('custom_api_url', url);
+          alert("✅ Nueva URL guardada: " + url + "\nLa página se recargará para aplicar los cambios.");
+      }
+      location.reload();
+  }
+
   // Funciones de Emergencia
   async function repararBaseDatos() {
     mostrarMsg('msg-reset','⏳ Intentando reparar esquema...','info');
