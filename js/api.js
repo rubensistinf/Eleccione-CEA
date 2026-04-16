@@ -30,9 +30,9 @@ async function descubrirBackend() {
                 console.log(`📡 Probando conexión con: ${url}...`);
                 const controller = new AbortController();
                 const id = setTimeout(() => controller.abort(), 3500); // 3.5s por intento
-                const res = await fetch(`${url}/admin/elecciones`, { signal: controller.signal });
+                const res = await fetch(`${url}/ping`, { signal: controller.signal });
                 clearTimeout(id);
-                if (res.ok || res.status === 401 || res.status === 403) {
+                if (res.ok) {
                     console.log("✅ ¡Conexión establecida!", url);
                     localStorage.setItem("custom_api_url", url);
                     API_URL = url;

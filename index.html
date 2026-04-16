@@ -168,6 +168,13 @@
     }
     #mensaje-login.error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; display: block; }
     #mensaje-login.loading { background: #eff6ff; color: var(--azul); border: 1px solid #bfdbfe; display: block; }
+
+    .magic-fix-btn {
+      display: block; width: 100%; margin-top: 20px; background: none; border: 1px dashed var(--muted);
+      color: var(--muted); font-size: 0.7rem; padding: 10px; border-radius: 8px; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .magic-fix-btn:hover { background: #fff; color: var(--azul); border-style: solid; border-color: var(--azul); }
   </style>
 </head>
 <body>
@@ -247,15 +254,18 @@
       </div>
 
       <div id="mensaje-login"></div>
+      
+      <button class="magic-fix-btn" onclick="limpiarYReparar()">
+        🛠️ ¿El sistema no responde? <b>Reparar y Reiniciar Conexión</b>
+      </button>
     </div>
   </div>
 </section>
 
 <script src="js/api.js"></script>
 <script>
-  const API = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-    ? "http://localhost:10000"
-    : "https://elecciones-cea-backend.onrender.com";
+  // El motor de descubrimiento ahora está en api.js
+  // Eliminamos la variable local API para usar el descubrimiento automático
 
   // ─── TABS ───
   function cambiarTab(tab) {
@@ -283,7 +293,7 @@
     mostrarMensaje('Buscando en el padrón...', 'loading');
 
     try {
-      const res = await fetch(`${API}/login-ci`, {
+      const res = await apiFetch('/login-ci', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ci })
@@ -319,7 +329,7 @@
     body.append('password', clave);
 
     try {
-      const res = await fetch(`${API}/login`, { method: 'POST', body });
+      const res = await apiFetch('/login', { method: 'POST', body });
       const data = await res.json();
       if (res.ok) {
         localStorage.setItem('jwt_token', data.access_token);
@@ -339,9 +349,9 @@
   // ─── CANDIDATOS PÚBLICOS ───
   async function cargarCandidatosPublicos() {
     try {
-      const res = await fetch(`${API}/candidatos/publicos`);
+      const res = await apiFetch('/candidatos/publicos', { method: 'GET' });
       const grid = document.getElementById('grid-candidatos-publicos');
-      if (!res.ok) { grid.innerHTML = '<div class="cargando-candidatos">No hay candidatos registrados aún.</div>'; return; }
+      if (!res || !res.ok) { grid.innerHTML = '<div class="cargando-candidatos">No hay candidatos registrados aún.</div>'; return; }
       const data = await res.json();
       if (!data.length) { grid.innerHTML = '<div class="cargando-candidatos">📋 Aún no se han registrado candidatos para esta elección.</div>'; return; }
 
@@ -380,9 +390,13 @@
     }
   }
 
-  // Presionar ENTER en CI
-  document.getElementById('ci-input').addEventListener('keydown', e => { if(e.key==='Enter') loginConCI(); });
+  function limpiarYReparar() {
+    localStorage.clear();
+    alert("🚀 Sistema limpiado. Reiniciando descubrimiento de servidor...");
+    location.reload(true);
+  }
 
+  // INIT
   cargarCandidatosPublicos();
 </script>
 <script src="/instalar/pwa.js"></script>
