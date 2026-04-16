@@ -211,11 +211,11 @@
   <div class="main-tab-content" id="tab-mesas">
     <div class="panel-grid">
 
-      <!-- AGREGAR MESAS -->
+      <!-- CREAR MESA + AUTO DISTRIBUIR -->
       <div class="panel-card">
         <div class="panel-card-header naranja">
           <span class="hicono">🪑</span>
-          <div><h3>Gestionar Mesas</h3><p>Crear mesas y ver cuántas hay</p></div>
+          <div><h3>Gestionar Mesas</h3><p>Crear mesas y distribuir votantes</p></div>
         </div>
         <div class="panel-card-body">
           <div class="form-group">
@@ -224,9 +224,16 @@
           </div>
           <div class="form-group">
             <label>Número de Mesa a Crear</label>
-            <input type="number" id="mesa-numero" placeholder="Ej: 3">
+            <input type="number" id="mesa-numero" placeholder="Ej: 1, 2, 3...">
           </div>
           <button class="btn-action btn-naranja" onclick="crearMesa()">➕ Agregar Mesa</button>
+
+          <div style="background:#fffbeb;border:1px solid #fbbf24;border-radius:10px;padding:14px;margin-top:16px;">
+            <div style="font-size:0.82rem;font-weight:700;color:#92400e;margin-bottom:8px;">🤖 Distribución Automática</div>
+            <div style="font-size:0.78rem;color:#b45309;margin-bottom:10px;">Divide todos los votantes inscritos en partes iguales entre las mesas disponibles (Round-Robin).</div>
+            <button class="btn-action btn-dorado" onclick="distribuirMesas()" style="margin:0;">🔄 Distribuir Votantes en Mesas</button>
+          </div>
+
           <div class="msg-box" id="msg-mesa"></div>
 
           <div style="margin-top:20px;">
@@ -238,26 +245,41 @@
         </div>
       </div>
 
-      <!-- ASIGNAR JEFE DE MESA -->
+      <!-- ASIGNAR JEFE POR CI -->
       <div class="panel-card">
         <div class="panel-card-header naranja">
           <span class="hicono">👤</span>
-          <div><h3>Asignar Jefes de Mesa</h3><p>Conectar jefes con sus mesas</p></div>
+          <div><h3>Designar Jefe de Mesa</h3><p>Busca por CI a cualquier votante inscrito</p></div>
         </div>
         <div class="panel-card-body">
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:0.82rem;color:var(--azul-claro);">
+            <strong>ℹ️ ¿Cómo funciona?</strong><br>
+            Ingresa el CI de cualquier persona ya inscrita en el padrón. El sistema la encontrará, cambiará su rol a <strong>Jefe de Mesa</strong> y la asignará a la mesa elegida.
+          </div>
+
           <div class="form-group">
-            <label>Mesa</label>
+            <label>🪪 CI del Jefe (votante ya inscrito)</label>
+            <div style="position:relative;">
+              <input type="text" id="jefe-ci" placeholder="Ej: 12345678" onkeydown="if(event.key==='Enter') buscarJefePorCI()">
+              <button style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:var(--azul);color:white;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:0.78rem;font-weight:600;" onclick="buscarJefePorCI()">🔍 Buscar</button>
+            </div>
+          </div>
+
+          <!-- Resultado busqueda jefe -->
+          <div id="jefe-encontrado" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;margin-bottom:14px;">
+            <div style="font-size:0.82rem;font-weight:700;color:#16a34a;">✅ Votante encontrado:</div>
+            <div style="font-size:0.88rem;font-weight:600;margin-top:4px;" id="jefe-nombre-preview">—</div>
+            <div style="font-size:0.75rem;color:var(--muted);" id="jefe-ci-preview">—</div>
+          </div>
+
+          <div class="form-group">
+            <label>Asignar a Mesa (selecciona la del ID ingresado arriba)</label>
             <select id="asig-mesa-id">
-              <option value="">— Primero carga las mesas (pestaña izquierda) —</option>
+              <option value="">Primero carga las mesas a la izquierda</option>
             </select>
           </div>
-          <div class="form-group">
-            <label>Jefe de Mesa</label>
-            <select id="asig-jefe-id">
-              <option value="">Cargando jefes...</option>
-            </select>
-          </div>
-          <button class="btn-action btn-naranja" onclick="asignarJefe()">✅ Asignar Jefe</button>
+
+          <button class="btn-action btn-naranja" onclick="asignarJefeCI()">✅ Designar como Jefe de Mesa</button>
           <div class="msg-box" id="msg-jefe"></div>
         </div>
       </div>
@@ -396,32 +418,63 @@
           <div class="mesa-jefe">
             <strong>Mesa ${m.numero}</strong>
             ${m.jefe ? '👤 ' + m.jefe : '<span style="color:var(--naranja);">Sin jefe asignado</span>'}
+            <span style="font-size:0.72rem;color:var(--muted);display:block;">${m.total_votantes} votante(s) asignado(s)</span>
           </div>
           <div style="font-size:0.72rem;color:var(--muted);">ID: ${m.id}</div>
         </div>`).join('');
-      selectMesa.innerHTML = data.map(m => `<option value="${m.id}">Mesa ${m.numero} (ID: ${m.id})</option>`).join('');
+      selectMesa.innerHTML = data.map(m => `<option value="${m.id}">Mesa ${m.numero} — ${m.total_votantes} votantes</option>`).join('');
     }
   }
 
-  async function cargarJefes() {
-    const r = await apiFetch('/admin/usuarios-jefe', { method:'GET' });
-    const sel = document.getElementById('asig-jefe-id');
+  // Buscar jefe por CI
+  async function buscarJefePorCI() {
+    const ci = document.getElementById('jefe-ci').value.trim();
+    if (!ci) return;
+    // Reutilizamos el endpoint de secretaria
+    const r = await apiFetch(`/secretaria/votantes/buscar/${ci}`, { method:'GET' });
+    const box = document.getElementById('jefe-encontrado');
     if (r && r.ok) {
-      const data = await r.json();
-      if (!data.length) { sel.innerHTML = '<option value="">No hay usuarios con rol jefe</option>'; return; }
-      sel.innerHTML = data.map(j => `<option value="${j.id}">${j.correo}</option>`).join('');
+      const d = await r.json();
+      document.getElementById('jefe-nombre-preview').textContent = d.nombre;
+      document.getElementById('jefe-ci-preview').textContent = 'CI: ' + d.ci + '  •  ' + d.correo;
+      box.style.display = 'block';
+    } else {
+      box.style.display = 'none';
+      mostrarMsg('msg-jefe','❌ CI no encontrado en el padrón. Primero debe inscribirse.','error');
     }
   }
 
-  async function asignarJefe() {
+  async function asignarJefeCI() {
+    const ci = document.getElementById('jefe-ci').value.trim();
     const mesa_id = parseInt(document.getElementById('asig-mesa-id').value);
-    const usuario_id = parseInt(document.getElementById('asig-jefe-id').value);
-    if (!mesa_id || !usuario_id) { mostrarMsg('msg-jefe','❌ Selecciona mesa y jefe.','error'); return; }
-    const r = await apiFetch('/admin/asignar-jefe', { method:'POST', body:JSON.stringify({ mesa_id, usuario_id }) });
+    if (!ci || !mesa_id) { mostrarMsg('msg-jefe','❌ Busca un CI y selecciona una mesa.','error'); return; }
+    const r = await apiFetch('/admin/asignar-jefe-ci', { method:'POST', body:JSON.stringify({ ci, mesa_id }) });
     if (r && r.ok) {
-      mostrarMsg('msg-jefe','✅ Jefe asignado correctamente.','ok');
+      const d = await r.json();
+      mostrarMsg('msg-jefe', d.msg, 'ok');
+      document.getElementById('jefe-ci').value = '';
+      document.getElementById('jefe-encontrado').style.display = 'none';
       cargarMesas();
-    } else mostrarMsg('msg-jefe','❌ Error al asignar.','error');
+    } else if (r) {
+      const err = await r.json();
+      mostrarMsg('msg-jefe','❌ ' + err.detail,'error');
+    }
+  }
+
+  async function distribuirMesas() {
+    const eleccion_id = document.getElementById('mesa-eleccion-id').value;
+    if (!eleccion_id) { mostrarMsg('msg-mesa','❌ Ingresa el ID de elección primero.','error'); return; }
+    mostrarMsg('msg-mesa','⏳ Distribuyendo votantes...','info');
+    const r = await apiFetch(`/admin/distribuir-mesas/${eleccion_id}`, { method:'POST' });
+    if (r && r.ok) {
+      const d = await r.json();
+      mostrarMsg('msg-mesa', d.msg, 'ok');
+      cargarMesas();
+      cargarStats();
+    } else if (r) {
+      const err = await r.json();
+      mostrarMsg('msg-mesa','❌ ' + err.detail,'error');
+    }
   }
 
   // ─── RESULTADOS ───

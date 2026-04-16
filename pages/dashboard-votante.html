@@ -223,6 +223,7 @@
     <div class="votante-info">
       <h3 id="votante-nombre">Cargando...</h3>
       <p id="votante-ci">CI: —</p>
+      <span id="votante-mesa" style="display:none;background:rgba(245,166,35,0.2);border:1px solid rgba(245,166,35,0.4);color:var(--dorado);font-size:0.75rem;font-weight:600;padding:3px 10px;border-radius:12px;margin-top:6px;"></span>
     </div>
     <div class="votante-badge" id="votante-badge">...</div>
   </div>
@@ -307,6 +308,16 @@
       document.getElementById('votante-nombre').textContent = infoVotante.nombre;
       document.getElementById('votante-ci').textContent = 'CI: ' + infoVotante.ci;
       document.getElementById('nombre-votante-header').textContent = infoVotante.nombre;
+
+      // Mostrar mesa asignada
+      const mesaEl = document.getElementById('votante-mesa');
+      if (infoVotante.mesa_numero) {
+        mesaEl.textContent = '🪑 Su mesa: Nº ' + infoVotante.mesa_numero;
+        mesaEl.style.display = 'inline-block';
+      } else {
+        mesaEl.textContent = '⏳ Mesa pendiente de asignación';
+        mesaEl.style.display = 'inline-block';
+      }
 
       const badge = document.getElementById('votante-badge');
       if (infoVotante.ha_votado) {
@@ -415,8 +426,9 @@
     document.getElementById('seccion-votacion').style.display = 'none';
     document.getElementById('box-instrucciones').style.display = 'none';
     document.getElementById('seccion-voto-emitido').style.display = 'block';
-    // Generar carnet con los datos del votante actual
-    setTimeout(() => dibujarCarnet(), 400);
+    // Pasar jefe de mesa al carnet
+    const jefe = infoVotante ? (infoVotante.nombre_jefe || '') : '';
+    setTimeout(() => dibujarCarnet(jefe), 400);
     iniciarResultadosEnVivo();
   }
 
@@ -460,16 +472,17 @@
   });
 
   // ─── GENERACIÓN DEL CARNET DE SUFRAGIO ───
-  function dibujarCarnet() {
+  function dibujarCarnet(nombreJefe) {
     const canvas = document.getElementById('canvas-carnet');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const W = canvas.width;   // 1012px
-    const H = canvas.height;  // 638px
+    const W = canvas.width;
+    const H = canvas.height;
 
-    // Paño de datos del votante
     const nombre = (infoVotante && infoVotante.nombre) ? infoVotante.nombre.toUpperCase() : 'VOTANTE';
     const ci     = (infoVotante && infoVotante.ci)     ? infoVotante.ci : '—';
+    const mesa   = (infoVotante && infoVotante.mesa_numero) ? 'Mesa Nº ' + infoVotante.mesa_numero : 'Mesa: Pendiente';
+    const jefeNombre = nombreJefe || 'Jefe de Mesa';
     const ahora  = new Date();
     const fecha  = ahora.toLocaleDateString('es-BO', { day:'2-digit', month:'long', year:'numeric' });
     const hora   = ahora.toLocaleTimeString('es-BO', { hour:'2-digit', minute:'2-digit' });
@@ -627,6 +640,7 @@
 
       dy = campo('Nombre del Votante', nombre, dy, true);
       dy = campo('Número de C.I.', ci, dy);
+      dy = campo('Mesa de Votación', mesa, dy);
       dy = campo('Fecha de Emisión', fecha, dy);
       dy = campo('Hora de Votación', hora, dy);
       dy = campo('Número de Folio', folio, dy);
@@ -645,15 +659,20 @@
 
       // Línea de firma
       ctx.beginPath();
-      ctx.moveTo(firmaDx, dy + 28); ctx.lineTo(firmaDx + 200, dy + 28);
+      ctx.moveTo(firmaDx, dy + 24); ctx.lineTo(firmaDx + 200, dy + 24);
       ctx.strokeStyle = 'rgba(255,255,255,0.4)';
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      ctx.fillStyle = 'rgba(255,255,255,0.5)';
-      ctx.font = '10px Inter, Arial, sans-serif';
+      // Nombre del jefe encima de la línea
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 11px Inter, Arial, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('Firma del Jefe de Mesa', firmaDx + 100, dy + 42);
+      ctx.fillText(jefeNombre.toUpperCase(), firmaDx + 100, dy + 18);
+
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.font = '9px Inter, Arial, sans-serif';
+      ctx.fillText('Jefe de Mesa', firmaDx + 100, dy + 36);
 
       // ESTADO OFICIAL
       const estadoX = W - 165;
