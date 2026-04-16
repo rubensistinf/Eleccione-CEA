@@ -25,12 +25,16 @@ async function apiFetch(endpoint, options = {}) {
       localStorage.removeItem("jwt_token");
       localStorage.removeItem("user_rol");
       window.location.href = "/index.html";
-      return null;
     }
     return res;
   } catch (err) {
     console.error("🚨 Error en apiFetch:", err);
-    return null;
+    // Retornamos un objeto "falso" para evitar que el código que llama a apiFetch explote al hacer await r.json()
+    return { 
+        ok: false, 
+        status: 503, 
+        json: async () => ({ detail: "Error técnico: El servidor no responde o la sesión ha expirado. Por favor refresca la página o intenta de nuevo." }) 
+    };
   }
 }
 
