@@ -520,7 +520,10 @@
             <div class="eleccion-id-txt">ID: ${e.id}</div>
           </div>
           <span class="badge-estado ${e.activa ? 'badge-abierta':'badge-cerrada'}">${e.activa ? '🟢 Abierta':'🔴 Cerrada'}</span>
-          <button class="btn-toggle-mini ${e.activa ? 'cerrar':'abrir'}" onclick="toggleEleccion(${e.id})">${e.activa ? 'Cerrar':'Abrir'}</button>
+          <div style="display:flex; gap:6px;">
+            <button class="btn-toggle-mini ${e.activa ? 'cerrar':'abrir'}" onclick="toggleEleccion(${e.id})">${e.activa ? 'Cerrar':'Abrir'}</button>
+            <button class="btn-toggle-mini" style="background:#fef2f2;color:#ef4444;border:1px solid #fca5a5;" onclick="eliminarEleccion(${e.id})" title="Borrar Elección y reiniciar el sistema">🗑️</button>
+          </div>
         </div>`).join('');
     }
   }
@@ -531,6 +534,30 @@
     cargarEstadoBanner();
     document.querySelector('.step.done')?.classList.remove('done');
     document.getElementById('step-1').classList.add('done');
+  }
+
+  async function eliminarEleccion(id) {
+    if(!confirm('🚨 ¡ATENCIÓN! 🚨\n\nSi borras esta elección, se ELIMINARÁ ABSOLUTAMENTE TODO:\n- Mesas y Jefes.\n- Candidatos y Votos.\n- Historial de participación.\n\n(El padrón de estudiantes se conservará, pero su estado de voto se reiniciará a cero para futuras elecciones).\n\n¿Estás seguro de que quieres DESTRUIR esta elección?')) return;
+    
+    // Doble confirmación por seguridad
+    const check = prompt("Escribe 'BORRAR' para confirmar la destrucción de la elección:");
+    if (check !== 'BORRAR') {
+        alert("Operación cancelada.");
+        return;
+    }
+
+    const r = await apiFetch(`/admin/elecciones/${id}`, { method:'DELETE' });
+    if (r && r.ok) {
+      alert("✅ Elección eliminada con éxito. El sistema ha sido reiniciado.");
+      cargarElecciones();
+      cargarEstadoBanner();
+      cargarStats();
+      
+      // Limpiar UI
+      document.getElementById('lista-mesas').innerHTML = '<div style="color:var(--muted);font-size:0.8rem;">No hay mesas creadas.</div>';
+    } else {
+      alert("❌ Ocurrió un error al intentar eliminar la elección.");
+    }
   }
 
   // ─── MESAS ───
