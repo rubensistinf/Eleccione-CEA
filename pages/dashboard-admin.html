@@ -759,8 +759,9 @@
   }
 
   async function asignarJefeCI() {
+    const ci = document.getElementById('jefe-ci').value.trim();
     const eleccion_id = activeEleccionId ? Number(activeEleccionId) : null;
-    if (!ci || !eleccion_id) { mostrarMsg('msg-jefe','❌ Primero debes seleccionar o escribir un ID de Elección válido.','error'); return; }
+    if (!ci || !eleccion_id) { mostrarMsg('msg-jefe','❌ Primero debes buscar o escribir un CI y un ID de Elección válido.','error'); return; }
     const r = await apiFetch('/admin/asignar-jefe-ci', { method:'POST', body:JSON.stringify({ ci, eleccion_id }) });
     if (r && r.ok) {
       const d = await r.json();
