@@ -336,10 +336,19 @@
         mostrarVotoYaEmitido();
       } else if (infoVotante.habilitado) {
         badge.className = 'votante-badge badge-habilitado';
-        badge.textContent = '✅ Habilitado';
+        badge.textContent = '✅ Habilitado para votar';
       } else {
         badge.className = 'votante-badge badge-no-habilitado';
-        badge.textContent = '⏳ Pendiente validación';
+        badge.textContent = '⏳ Pendiente de validación';
+        // Mostrar instruccion de mesa
+        const mesa = infoVotante.mesa_numero;
+        const mesaEl = document.getElementById('votante-mesa');
+        if (mesa) {
+          mesaEl.textContent = `🪑 Diríjase a la Mesa Nº ${mesa} para ser habilitado`;
+          mesaEl.style.background = 'rgba(234,88,12,0.15)';
+          mesaEl.style.borderColor = 'rgba(234,88,12,0.4)';
+          mesaEl.style.color = '#fb923c';
+        }
       }
     }
   }
@@ -353,15 +362,45 @@
       const estado = await estadoRes.json();
       eleccionIdGlobal = estado.id;
       if (!estado.activa) {
-        // Votación cerrada/no iniciada
-        banner.style.cssText = 'display:flex;margin-bottom:20px;padding:18px 24px;border-radius:16px;align-items:center;gap:14px;background:linear-gradient(135deg,#1e3a5f,#2d5282);border:1px solid rgba(245,166,35,0.3);';
-        document.getElementById('banner-icono').textContent = '⏳';
-        document.getElementById('banner-titulo').style.color = '#f5a623';
-        document.getElementById('banner-titulo').textContent = 'La votación aún no ha comenzado';
-        document.getElementById('banner-subtitulo').style.color = 'rgba(255,255,255,0.7)';
-        document.getElementById('banner-subtitulo').textContent = estado.nombre 
+        // Determinar mensaje según estado del votante
+        let icono = '🕑';
+        let colorTitulo = '#f5a623';
+        let titulo = 'La votación aún no ha comenzado';
+        let subtitulo = estado.nombre
           ? `"${estado.nombre}" — Espera que el Administrador habilite el proceso.`
-          : 'El administrador no ha creado ningún proceso electoral aún.';
+          : 'El administrador no ha abierto el proceso electoral aún.';
+        let bgBanner = 'linear-gradient(135deg,#1e3a5f,#2d5282)';
+        let borderBanner = '1px solid rgba(245,166,35,0.3)';
+
+        // Si la elección existe pero está cerrada, analizar estado del votante
+        if (estado.id && infoVotante) {
+          if (infoVotante.ha_votado) {
+            // Este caso ya es manejado por mostrarVotoYaEmitido, no llegará aquí
+          } else if (infoVotante.habilitado && !infoVotante.ha_votado) {
+            // Estaba habilitado pero NO votó (no se presentó)
+            icono = '⚠️';
+            colorTitulo = '#fbbf24';
+            bgBanner = 'linear-gradient(135deg,#451a03,#78350f)';
+            borderBanner = '1px solid #f59e0b';
+            titulo = 'La votación ha finalizado';
+            subtitulo = 'Estabas habilitado pero no emitiste tu voto. No se generará carnet de sufragio.';
+          } else if (!infoVotante.habilitado) {
+            // No fue habilitado por el jefe
+            icono = '❌';
+            colorTitulo = '#fca5a5';
+            bgBanner = 'linear-gradient(135deg,#450a0a,#7f1d1d)';
+            borderBanner = '1px solid #dc2626';
+            titulo = 'No participaste en la elección';
+            subtitulo = 'No fuiste habilitado por el Jefe de Mesa. No se genera Carnet de Sufragio.';
+          }
+        }
+
+        banner.style.cssText = `display:flex;margin-bottom:20px;padding:18px 24px;border-radius:16px;align-items:center;gap:14px;background:${bgBanner};border:${borderBanner};flex-wrap:wrap;`;
+        document.getElementById('banner-icono').textContent = icono;
+        document.getElementById('banner-titulo').style.color = colorTitulo;
+        document.getElementById('banner-titulo').textContent = titulo;
+        document.getElementById('banner-subtitulo').style.color = 'rgba(255,255,255,0.7)';
+        document.getElementById('banner-subtitulo').textContent = subtitulo;
         document.getElementById('seccion-votacion').style.display = 'none';
         document.getElementById('box-instrucciones').style.display = 'none';
         return;
