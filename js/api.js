@@ -16,18 +16,22 @@ function getAuthHeaders() {
 
 // Interceptar fetch para manejar 401 (No autorizado) - redirigir a index
 async function apiFetch(endpoint, options = {}) {
-  options.headers = getAuthHeaders();
-  const res = await fetch(`${API_URL}${endpoint}`, options);
-  
-  if (res.status === 401) {
-    alert("Sesión expirada o no autorizada. Vuelva a iniciar sesión.");
-    localStorage.removeItem("jwt_token");
-    localStorage.removeItem("user_rol");
-    window.location.href = "/index.html";
+  try {
+    options.headers = getAuthHeaders();
+    const res = await fetch(`${API_URL}${endpoint}`, options);
+    
+    if (res.status === 401) {
+      console.warn("🔐 Sesión expirada.");
+      localStorage.removeItem("jwt_token");
+      localStorage.removeItem("user_rol");
+      window.location.href = "/index.html";
+      return null;
+    }
+    return res;
+  } catch (err) {
+    console.error("🚨 Error en apiFetch:", err);
     return null;
   }
-  
-  return res;
 }
 
 function redirigirPorRol(rol) {

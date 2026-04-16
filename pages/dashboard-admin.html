@@ -649,25 +649,28 @@
     const r = await apiFetch('/admin/elecciones', { method:'GET' });
     const cont = document.getElementById('lista-elecciones');
     if (r && r.ok) {
-      const data = await r.json();
-      if (!data.length) { cont.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;text-align:center;padding:16px;">No hay elecciones aún.</div>'; return; }
-      cont.innerHTML = data.map(e => `
-        <div class="eleccion-item">
-          <div>
-            <div class="eleccion-nombre">${e.nombre}</div>
-            <div class="eleccion-id-txt">ID: ${e.id}</div>
-          </div>
-          <span class="badge-estado ${e.activa ? 'badge-abierta':'badge-cerrada'}">${e.activa ? '🟢 Abierta':'🔴 Cerrada'}</span>
-          <div style="display:flex; gap:6px;">
-            <button class="btn-toggle-mini" style="background:var(--azul);color:white;" onclick="gestionarEleccionLocal(${e.id})">📂 Gestionar</button>
-            <button class="btn-toggle-mini ${e.activa ? 'cerrar':'abrir'}" onclick="toggleEleccion(${e.id})">${e.activa ? 'Cerrar':'Abrir'}</button>
-            <button class="btn-toggle-mini" style="background:#fef2f2;color:#ef4444;border:1px solid #fca5a5;" onclick="eliminarEleccion(${e.id})" title="Borrar Elección y reiniciar el sistema">🗑️</button>
-          </div>
-        </div>`).join('');
+        const data = await r.json();
+        const cont = document.getElementById('lista-elecciones');
+        if (!data.length) { cont.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;text-align:center;padding:16px;">📂 No hay elecciones aún.</div>'; return; }
+        cont.innerHTML = data.map(e => `
+          <div class="eleccion-item">
+            <div>
+              <div class="eleccion-nombre">${e.nombre}</div>
+              <div class="eleccion-id-txt">ID: ${e.id} | Estado: ${e.activa ? 'Activa':'Cerrada'}</div>
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button class="btn-toggle-mini" style="background:var(--azul);color:white;" onclick="gestionarEleccionLocal(${e.id})">📂 Gestionar</button>
+              <button class="btn-toggle-mini ${e.activa ? 'cerrar':'abrir'}" onclick="toggleEleccion(${e.id})">${e.activa ? 'Cerrar':'Abrir'}</button>
+            </div>
+          </div>`).join('');
     } else {
-        cont.innerHTML = '<div style="color:var(--rojo);font-size:0.82rem;text-align:center;padding:16px;">❌ Error al conectar con el servidor. <br><small>Revisa tu conexión o espera a que Render reinicie el servicio.</small></div>';
+        const cont = document.getElementById('lista-elecciones');
+        cont.innerHTML = `<div style="color:var(--rojo);font-size:0.82rem;text-align:center;padding:16px;">
+            ❌ Problema de Conexión<br>
+            <small>El servidor no responde o está en reposo.<br>Espera 30 segundos y pulsa Actualizar.</small>
+        </div>`;
     }
-  }
+}
 
   async function toggleEleccion(id) {
     await apiFetch(`/admin/elecciones/${id}/toggle`, { method:'POST' });
