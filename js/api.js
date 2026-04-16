@@ -2,7 +2,7 @@
 // Para este proyecto alojaremos frontend en Render Static Site y Backend en Render Web Service.
 const API_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" 
     ? "http://localhost:10000" 
-    : "https://elecciones-cea-backend.onrender.com"; // <-- REEMPLAZAR CON TU URL REAL DE RENDER
+    : "https://eleccione-cea-backend.onrender.com"; // <-- DIRECCIÓN EN SINGULAR DETECTADA
 
 // Utilidad para extraer encabezados con JWT
 function getAuthHeaders() {
