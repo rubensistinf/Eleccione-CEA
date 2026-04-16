@@ -464,6 +464,27 @@
             </tbody>
           </table>
         </div>
+      <!-- ZONA DE PELIGRO: REINICIO TOTAL -->
+      <div class="panel-card" style="max-width:1000px; margin-top:24px; border:2px solid #fee2e2;">
+        <div class="panel-card-header rojo">
+          <span class="hicono">💣</span>
+          <div><h3>Zona de Peligro: Reinicio de Sistema</h3><p>Borra absolutamente todos los datos electorales</p></div>
+        </div>
+        <div class="panel-card-body">
+          <div style="background:#fff1f2; border:1px solid #fecaca; border-radius:12px; padding:16px; margin-bottom:16px; color:#991b1b;">
+            <h4 style="font-size:0.9rem; margin-bottom:6px;">⚠️ Cero Datos (Nivel Pro)</h4>
+            <p style="font-size:0.75rem;">Esta acción eliminará permanentemente:</p>
+            <ul style="font-size:0.75rem; margin:8px 0 8px 20px;">
+              <li>Todas las Elecciones y sus resultados.</li>
+              <li>Todas las Mesas y Jefes de Mesa asignados.</li>
+              <li>Todos los Candidatos, Votos y Logs de Auditoría.</li>
+              <li><b>Todos los Votantes inscritos</b>.</li>
+            </ul>
+            <p style="font-size:0.75rem;"><b>Solo se conservarán los 4 usuarios base de prueba.</b></p>
+          </div>
+          <button class="btn-action btn-rojo" onclick="resetearSistemaPro()" style="width:auto; padding:12px 24px;">💣 Ejecutar REINICIO TOTAL (Cero Datos)</button>
+          <div class="msg-box" id="msg-reset"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -864,6 +885,25 @@
     if (r && r.ok) {
       mostrarMsg('msg-control-voto','🔴 Votación CERRADA.','info');
       cargarEstadoVotacion(); cargarEstadoBanner();
+    }
+  }
+
+  async function resetearSistemaPro() {
+    if(!confirm("🚨 ADVERTENCIA CRÍTICA 🚨\n\n¿Estás SEGURO de que quieres borrar ABSOLUTAMENTE TODO el sistema?\n\nEsta acción NO se puede deshacer.")) return;
+    if(!confirm("⚠️ ÚLTIMA CONFIRMACIÓN:\nTodo será borrado (Votantes, Jefes, Elecciones, Votos).\n\n¿Proceder con el REINICIO TOTAL?")) return;
+
+    const btn = event.target;
+    btn.disabled = true;
+    btn.textContent = '⏳ Reiniciando...';
+
+    const r = await apiFetch('/admin/reset-sistema', { method:'POST' });
+    if (r && r.ok) {
+        alert("✅ Sistema reiniciado correctamente.\nTodos los datos han sido borrados.");
+        location.reload();
+    } else {
+        mostrarMsg('msg-reset','❌ Error al reiniciar el sistema.','error');
+        btn.disabled = false;
+        btn.textContent = '💣 Ejecutar REINICIO TOTAL (Cero Datos)';
     }
   }
 
