@@ -145,6 +145,22 @@
     .btn-toggle-mini.cerrar { background:#fef2f2; color:var(--rojo); border:1px solid #fecaca; }
     .btn-toggle-mini.abrir  { background:#f0fdf4; color:var(--verde); border:1px solid #bbf7d0; }
 
+    /* GLOBAL ELECTION INDICATOR */
+    .election-context-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 99px;
+      color: white;
+      font-size: 0.75rem;
+      font-weight: 600;
+      backdrop-filter: blur(4px);
+    }
+    .election-context-badge b { color: var(--dorado); font-weight: 800; font-size: 0.85rem; }
+
     /* MESA ITEMS */
     .mesa-item {
       background:#f8faff; border:1px solid rgba(0,53,128,0.1); border-radius:10px;
@@ -197,7 +213,12 @@
     <div class="banner-info">
       <div class="banner-icon" id="banner-icon">⏳</div>
       <div>
-        <div class="banner-titulo" id="banner-titulo">Sin elección activa</div>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <div class="banner-titulo" id="banner-titulo">Sin elección activa</div>
+            <div id="active-election-badge-ui" class="election-context-badge" style="display:none;">
+                <span>Gestión de Elección:</span> <b id="active-election-id-val">#—</b>
+            </div>
+        </div>
         <div class="banner-sub" id="banner-sub">Crea una elección en el Paso 1 para comenzar</div>
         <div class="banner-id" id="banner-id"></div>
       </div>
@@ -286,7 +307,7 @@
         <div class="panel-card-body">
           <div class="form-group">
             <label>ID de Elección</label>
-            <input type="number" id="mesa-eleccion-id" placeholder="Ej: 1" oninput="cargarMesas()">
+            <input type="number" id="mesa-eleccion-id" class="sync-id" placeholder="Ej: 1" oninput="actualizarIDGlobal(this.value); cargarMesas()">
           </div>
           <div class="form-group">
             <label>Cantidad de Mesas a crear</label>
@@ -351,7 +372,7 @@
           </div>
           <div class="form-group">
             <label>ID de Elección</label>
-            <input type="number" id="sorteo-eleccion-id" placeholder="Ej: 1">
+            <input type="number" id="sorteo-eleccion-id" class="sync-id" placeholder="Ej: 1" oninput="actualizarIDGlobal(this.value)">
           </div>
           <button class="btn-action btn-dorado" onclick="ejecutarSorteo()" style="font-size:1rem;padding:16px;">
             🎲 EJECUTAR SORTEO DE MESAS
@@ -381,7 +402,7 @@
           </div>
           <div class="form-group">
             <label>ID de Elección a controlar</label>
-            <input type="number" id="toggle-eleccion-id" placeholder="Ej: 1">
+            <input type="number" id="toggle-eleccion-id" class="sync-id" placeholder="Ej: 1" oninput="actualizarIDGlobal(this.value)">
           </div>
           <button class="btn-action btn-verde" id="btn-abrir-votar" onclick="abrirVotacion()">🟢 ABRIR VOTACIÓN</button>
           <button class="btn-action btn-rojo"  id="btn-cerrar-votar" onclick="cerrarVotacion()">🔴 CERRAR VOTACIÓN</button>
@@ -408,7 +429,7 @@
           <div style="font-size:0.8rem;color:#991b1b;margin-bottom:12px;">Esta acción cierra la votación de forma definitiva y publica los resultados para todos.</div>
           <div class="form-group" style="margin-bottom:10px;">
             <label>ID de Elección</label>
-            <input type="number" id="pub-eleccion-id" placeholder="1">
+            <input type="number" id="pub-eleccion-id" class="sync-id" placeholder="1" oninput="actualizarIDGlobal(this.value)">
           </div>
           <button class="btn-action btn-rojo" onclick="publicarResultados()">🔒 Cerrar y Publicar Resultados Oficiales</button>
         </div>
@@ -423,12 +444,47 @@
 <script>
   if (localStorage.getItem('user_rol') !== 'admin') cerrarSesion();
 
-  let eleccionActivaId = null;
+  let activeEleccionId = localStorage.getItem('active_eleccion_id') || null;
 
   function mostrarMsg(id, texto, tipo) {
     const el = document.getElementById(id);
+    if(!el) return;
     el.textContent = texto; el.className = 'msg-box show ' + tipo;
   }
+
+  function actualizarIDGlobal(val) {
+    activeEleccionId = val;
+    localStorage.setItem('active_eleccion_id', val);
+    
+    const badge = document.getElementById('active-election-badge-ui');
+    const valSpan = document.getElementById('active-election-id-val');
+    
+    if(val) {
+        badge.style.display = 'inline-flex';
+        valSpan.textContent = '#' + val;
+    } else {
+        badge.style.display = 'none';
+    }
+
+    document.querySelectorAll('.sync-id').forEach(i => {
+      if(i.value !== val) i.value = val;
+    });
+    // Si estamos en Paso 2, recargar mesas automáticamente
+    if (val && document.getElementById('tab-2').classList.contains('activo')) {
+        cargarMesas();
+    }
+  }
+
+  // Al cargar la página, restaurar el ID si existe
+  window.addEventListener('scroll', () => {}); // placeholder
+  document.addEventListener('DOMContentLoaded', () => {
+    if(activeEleccionId) {
+        actualizarIDGlobal(activeEleccionId);
+    }
+    cargarElecciones();
+    cargarStats();
+    cargarEstadoBanner();
+  });
 
   function activarTab(num) {
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('activo'));
@@ -441,7 +497,8 @@
 
   // ─── STATS ───
   async function cargarStats() {
-    const r = await apiFetch('/admin/stats', { method:'GET' });
+    const url = activeEleccionId ? `/admin/stats?eleccion_id=${activeEleccionId}` : '/admin/stats';
+    const r = await apiFetch(url, { method:'GET' });
     if (r && r.ok) {
       const d = await r.json();
       document.getElementById('st-votantes').textContent = d.total_votantes;
@@ -462,7 +519,8 @@
     const btn = document.getElementById('btn-toggle-votar');
     btn.style.display = 'inline-block';
     document.getElementById('banner-id').textContent = d.id ? `ID de Elección: ${d.id}` : '';
-    eleccionActivaId = d.id;
+    // No sobreescribir activeEleccionId si ya seleccionamos uno manualmente
+    if(!activeEleccionId && d.id) actualizarIDGlobal(d.id);
 
     if (d.activa) {
       banner.className = 'voting-banner abierta';
@@ -484,8 +542,8 @@
   }
 
   async function toggleVotacion() {
-    if (!eleccionActivaId) { alert('No hay elección activa.'); return; }
-    const r = await apiFetch(`/admin/elecciones/${eleccionActivaId}/toggle`, { method:'POST' });
+    if (!activeEleccionId) { alert('No hay elección activa seleccionada.'); return; }
+    const r = await apiFetch(`/admin/elecciones/${activeEleccionId}/toggle`, { method:'POST' });
     if (r && r.ok) {
       cargarEstadoBanner();
       cargarStats();
@@ -501,9 +559,11 @@
       const d = await r.json();
       mostrarMsg('msg-eleccion', `✅ Elección creada — ID: ${d.id}`, 'ok');
       document.getElementById('nueva-eleccion-nombre').value = '';
+      actualizarIDGlobal(d.id); // Seleccionar automáticamente
       cargarElecciones();
       cargarEstadoBanner();
       cargarStats();
+      setTimeout(() => activarTab(2), 1000); // Ir al paso 2
     } else mostrarMsg('msg-eleccion','❌ Error al crear.','error');
   }
 
@@ -530,6 +590,7 @@
 
   async function toggleEleccion(id) {
     await apiFetch(`/admin/elecciones/${id}/toggle`, { method:'POST' });
+    actualizarIDGlobal(id); // Al abrir/cerrar, probablemente queremos gestionarla
     cargarElecciones();
     cargarEstadoBanner();
     document.querySelector('.step.done')?.classList.remove('done');
@@ -576,7 +637,7 @@
   }
 
   async function cargarMesas() {
-    const eleccion_id = document.getElementById('mesa-eleccion-id').value;
+    const eleccion_id = activeEleccionId;
     if (!eleccion_id) return;
     const r = await apiFetch(`/admin/mesas/${eleccion_id}`, { method:'GET' });
     const cont = document.getElementById('lista-mesas');
@@ -628,8 +689,8 @@
 
   async function asignarJefeCI() {
     const ci = document.getElementById('jefe-ci').value.trim();
-    const eleccion_id = parseInt(document.getElementById('mesa-eleccion-id').value);
-    if (!ci || !eleccion_id) { mostrarMsg('msg-jefe','❌ Asegúrate de buscar un CI y tener un ID de Elección en la columna izquierda.','error'); return; }
+    const eleccion_id = activeEleccionId;
+    if (!ci || !eleccion_id) { mostrarMsg('msg-jefe','❌ Primero debes seleccionar o escribir un ID de Elección válido.','error'); return; }
     const r = await apiFetch('/admin/asignar-jefe-ci', { method:'POST', body:JSON.stringify({ ci, eleccion_id }) });
     if (r && r.ok) {
       const d = await r.json();
@@ -646,8 +707,8 @@
 
   // ─── SORTEO ───
   async function ejecutarSorteo() {
-    const eleccion_id = document.getElementById('sorteo-eleccion-id').value;
-    if (!eleccion_id) { mostrarMsg('msg-sorteo','❌ Ingresa el ID de elección.','error'); return; }
+    const eleccion_id = activeEleccionId;
+    if (!eleccion_id) { mostrarMsg('msg-sorteo','❌ No hay elección seleccionada.','error'); return; }
     mostrarMsg('msg-sorteo','🎲 Ejecutando sorteo aleatorio...','info');
     const r = await apiFetch(`/admin/distribuir-mesas/${eleccion_id}`, { method:'POST' });
     if (r && r.ok) {
@@ -687,8 +748,8 @@
   }
 
   async function abrirVotacion() {
-    const id = document.getElementById('toggle-eleccion-id').value;
-    if (!id) { mostrarMsg('msg-control-voto','❌ Ingresa el ID.','error'); return; }
+    const id = activeEleccionId;
+    if (!id) { mostrarMsg('msg-control-voto','❌ Primero selecciona una elección.','error'); return; }
     const r = await apiFetch(`/admin/elecciones/${id}/toggle`, { method:'POST' });
     if (r && r.ok) {
       const d = await r.json();
@@ -703,8 +764,8 @@
   }
 
   async function cerrarVotacion() {
-    const id = document.getElementById('toggle-eleccion-id').value;
-    if (!id) { mostrarMsg('msg-control-voto','❌ Ingresa el ID.','error'); return; }
+    const id = activeEleccionId;
+    if (!id) { mostrarMsg('msg-control-voto','❌ Primero selecciona una elección.','error'); return; }
     if (!confirm('¿Cerrar la votación? Los votantes ya no podrán emitir votos.')) return;
     const r = await apiFetch(`/admin/elecciones/${id}/toggle`, { method:'POST' });
     if (r && r.ok) {
@@ -715,7 +776,8 @@
 
   // ─── RESULTADOS ───
   async function cargarResultados() {
-    const r = await apiFetch('/admin/resultados', { method:'GET' });
+    if(!activeEleccionId) return;
+    const r = await apiFetch(`/admin/resultados?eleccion_id=${activeEleccionId}`, { method:'GET' });
     if (r && r.ok) {
       const data = await r.json();
       const box = document.getElementById('resultados-box');
@@ -738,8 +800,8 @@
   }
 
   async function publicarResultados() {
-    const id = document.getElementById('pub-eleccion-id').value;
-    if (!id) { mostrarMsg('msg-pub','❌ Ingresa el ID.','error'); return; }
+    const id = activeEleccionId;
+    if (!id) { mostrarMsg('msg-pub','❌ Primero selecciona una elección.','error'); return; }
     if (!confirm('¿Publicar resultados oficiales? Esto cierra la elección definitivamente.')) return;
     const r = await apiFetch(`/admin/publicar-resultados?eleccion_id=${id}`, { method:'POST' });
     if (r && r.ok) {
