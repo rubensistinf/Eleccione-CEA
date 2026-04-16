@@ -7,10 +7,9 @@ if (localStorage.getItem("cea_v") !== SYSTEM_VERSION) {
 
 const POSSIBLE_BACKENDS = [
     localStorage.getItem("custom_api_url"),
-    window.location.origin, // Probar si el backend está en el mismo dominio
-    "https://eleccione-cea-backend.onrender.com",
-    "https://elecciones-cea-backend.onrender.com",
+    "https://eleccione-cea-backend.onrender.com", // PRIORIDAD 1: Estable e Instantáneo
     "https://votacion-cea-backend.onrender.com",
+    window.location.origin,
     "https://votacion-backend.onrender.com"
 ].filter(Boolean);
 
