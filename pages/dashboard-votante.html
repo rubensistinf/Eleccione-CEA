@@ -427,11 +427,11 @@
         return;
       }
 
-      candidatosData.forEach(c => {
+      candidatosData.forEach((c, index) => {
         if (!eleccionIdGlobal) eleccionIdGlobal = c.eleccion_id;
-        const foto = c.imagen_base64
-          ? `<img src="${c.imagen_base64}" alt="${c.nombre}" class="candidato-foto">`
-          : `<div class="candidato-foto-placeholder">🎓</div>`;
+        const fallbackSrc = `../candidatos/${index + 1}.png`;
+        const imgSrc = c.imagen_base64 || fallbackSrc;
+        const foto = `<img src="${imgSrc}" alt="${c.nombre}" class="candidato-foto" onerror="this.outerHTML='<div class=\\'candidato-foto-placeholder\\'>🎓</div>'">`;
 
         const card = document.createElement('div');
         card.className = 'candidato-card';
@@ -465,11 +465,11 @@
 
     // Rellenar modal
     const mFoto = document.getElementById('modal-foto');
-    if (c.imagen_base64) {
-      mFoto.innerHTML = `<img src="${c.imagen_base64}" alt="${c.nombre}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
-    } else {
-      mFoto.textContent = '🎓';
-    }
+    const candIndex = candidatosData.findIndex(x => x.id === c.id);
+    const fallbackSrc = `../candidatos/${candIndex + 1}.png`;
+    const imgSrc = c.imagen_base64 || fallbackSrc;
+    mFoto.innerHTML = `<img src="${imgSrc}" alt="${c.nombre}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.parentElement.innerHTML='🎓'">`;
+
     document.getElementById('modal-nombre').textContent = c.nombre;
     const mSigla = document.getElementById('modal-sigla');
     if (c.sigla) { mSigla.textContent = c.sigla; mSigla.style.display = 'inline-block'; }
