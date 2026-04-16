@@ -483,6 +483,10 @@
             <p style="font-size:0.75rem;"><b>Solo se conservarán los 4 usuarios base de prueba.</b></p>
           </div>
           <button class="btn-action btn-rojo" onclick="resetearSistemaPro()" style="width:auto; padding:12px 24px;">💣 Ejecutar REINICIO TOTAL (Cero Datos)</button>
+          <div style="margin-top:20px; border-top:1px solid #fecaca; padding-top:20px;">
+            <p style="font-size:0.75rem; color:var(--muted); margin-bottom:8px;">¿Errores de conexión o listas que no cargan? Usa esta herramienta para forzar la creación de columnas faltantes.</p>
+            <button class="btn-action btn-azul" onclick="repararBaseDatos()" style="width:auto; padding:10px 20px; background:var(--azul); border:none;">🔧 Reparar Base de Datos (Esquema)</button>
+          </div>
           <div class="msg-box" id="msg-reset"></div>
         </div>
       </div>
@@ -494,6 +498,19 @@
 
 <script src="../js/api.js"></script>
 <script>
+  // Funciones de Emergencia
+  async function repararBaseDatos() {
+    mostrarMsg('msg-reset','⏳ Intentando reparar esquema...','info');
+    const r = await apiFetch('/admin/forzar-migracion', { method:'GET' });
+    if (r && r.ok) {
+        const d = await r.json();
+        alert("✅ " + d.msg);
+        location.reload();
+    } else {
+        mostrarMsg('msg-reset','❌ Error al reparar. Prueba a esperar que Render termine el despliegue.','error');
+    }
+  }
+
   // Protección de ruta "Nivel Pro"
   (function() {
     const rol = localStorage.getItem('user_rol');
