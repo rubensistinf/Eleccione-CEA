@@ -244,6 +244,7 @@
     <div class="step"        id="step-2" onclick="activarTab(2)"><div class="step-num">2️⃣</div><div class="step-label">Mesas y Jefes</div></div>
     <div class="step"        id="step-3" onclick="activarTab(3)"><div class="step-num">3️⃣</div><div class="step-label">Sorteo de Mesas</div></div>
     <div class="step"        id="step-4" onclick="activarTab(4)"><div class="step-num">4️⃣</div><div class="step-label">Resultados</div></div>
+    <div class="step"        id="step-5" onclick="activarTab(5)"><div class="step-num">🛡️</div><div class="step-label">Auditoría</div></div>
   </div>
 
   <!-- ═══ TAB 1: ELECCIONES ═══ -->
@@ -435,8 +436,38 @@
         </div>
         <div class="msg-box" id="msg-pub"></div>
       </div>
+    <!-- ═══ TAB 5: AUDITORÍA ═══ -->
+  <div class="tab-content" id="tab-5">
+    <div class="panel-card" style="max-width:1000px;">
+      <div class="panel-card-header azul">
+        <span class="hicono">🛡️</span>
+        <div><h3>Registro de Actividad y Seguridad (AuditLog)</h3><p>Seguimiento detallado de todas las acciones críticas del sistema</p></div>
+      </div>
+      <div class="panel-card-body">
+        <div style="background:#f8faff;border:1px solid rgba(0,53,128,0.1);border-radius:12px;padding:14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-size:0.8rem;color:var(--muted);">Muestra las últimas 200 acciones realizadas por Admin, Secretaría y Jefes.</div>
+          <button class="btn-action btn-azul" onclick="cargarAuditoria()" style="width:auto;padding:8px 16px;margin:0;">🔄 Actualizar Logs</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="lista-table" style="font-size:0.75rem;">
+            <thead>
+              <tr style="background:var(--azul);color:white;">
+                <th style="padding:10px;">Fecha/Hora</th>
+                <th style="padding:10px;">Usuario ID</th>
+                <th style="padding:10px;">Acción</th>
+                <th style="padding:10px;">Detalle</th>
+                <th style="padding:10px;">IP de origen</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-auditoria">
+              <tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted);">Presiona "Actualizar Logs"</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
+</div>
 
 </main>
 
@@ -493,6 +524,37 @@
     document.getElementById('step-' + num).classList.add('active');
     if (num === 4) { cargarResultados(); setInterval(cargarResultados, 5000); }
     if (num === 3) { cargarEstadoVotacion(); }
+    if (num === 5) { cargarAuditoria(); }
+  }
+
+  async function cargarAuditoria() {
+    const tbody = document.getElementById('tbody-auditoria');
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:10px;">⏳ Consultando servidor...</td></tr>';
+    const r = await apiFetch('/admin/auditoria', { method:'GET' });
+    if (r && r.ok) {
+        const data = await r.json();
+        if(!data.length) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;">No hay registros aún.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = data.map(log => {
+            const fecha = new Date(log.timestamp).toLocaleString('es-BO');
+            let badgeClass = 'info';
+            if(log.accion.includes('LOGIN')) badgeClass = 'ok';
+            if(log.accion.includes('ELIMINAR')) badgeClass = 'error';
+            
+            return `
+            <tr>
+                <td style="color:var(--muted);white-space:nowrap;">${fecha}</td>
+                <td style="font-weight:700;text-align:center;">#${log.usuario_id || '—'}</td>
+                <td><span class="badge-hab" style="background:#e0e7ff;color:#3730a3;font-size:0.65rem;padding:2px 6px;">${log.accion}</span></td>
+                <td style="font-weight:500;">${log.detalle}</td>
+                <td style="font-family:monospace;font-size:0.7rem;color:var(--muted);">${log.ip_address || 'Interna'}</td>
+            </tr>`;
+        }).join('');
+    } else {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--rojo);padding:10px;">❌ Error al cargar logs. Asegúrate de que el backend soporte AuditLogs.</td></tr>';
+    }
   }
 
   // ─── STATS ───
@@ -522,7 +584,16 @@
     // No sobreescribir activeEleccionId si ya seleccionamos uno manualmente
     if(!activeEleccionId && d.id) actualizarIDGlobal(d.id);
 
-    if (d.activa) {
+    if (d.resultados_publicados) {
+      banner.className = 'voting-banner cerrada';
+      banner.style.border = '3px solid #f5a623';
+      banner.style.background = 'linear-gradient(135deg, #001f5b, #003580)';
+      document.getElementById('banner-icon').textContent = '🏆';
+      document.getElementById('banner-titulo').textContent = '¡Resultados Oficiales Publicados!';
+      document.getElementById('banner-titulo').style.color = '#f5a623';
+      document.getElementById('banner-sub').innerHTML = `<b>${d.nombre}</b> — El proceso electoral ha concluido definitivamente.`;
+      btn.style.display = 'none';
+    } else if (d.activa) {
       banner.className = 'voting-banner abierta';
       document.getElementById('banner-icon').textContent = '🟢';
       document.getElementById('banner-titulo').textContent = '¡Votación en Curso!';
@@ -784,16 +855,22 @@
       const maxV = data.length ? Math.max(...data.map(d => d.votos)) : 1;
       const emojis = ['🥇','🥈','🥉'];
       if (!data.length) { box.innerHTML = '<div style="text-align:center;color:var(--muted);padding:20px;">No hay votos registrados aún.</div>'; return; }
-      box.innerHTML = data.map((r, i) => `
-        <div class="resultado-item">
+      
+      const resEstado = await fetch(`${API_URL}/votante/estado-eleccion`);
+      const estInfo = await resEstado.json();
+      const esOficial = estInfo.resultados_publicados;
+
+      box.innerHTML = (esOficial ? '<div style="background:#fff7ed;border:1px solid #ffedd5;padding:10px;border-radius:10px;margin-bottom:15px;text-align:center;font-weight:800;color:#c2410c;font-size:0.85rem;">🏆 RESULTADOS OFICIALES Y DEFINITIVOS 🏆</div>' : '') + 
+        data.map((r, i) => `
+        <div class="resultado-item" style="${i < 3 ? 'border-left: 4px solid var(--dorado); background: #fffcf0;' : ''}">
           <div class="resultado-pos">${emojis[i] || (i+1)+'°'}</div>
           <div class="resultado-info">
-            <div class="resultado-nombre">${r.candidato}</div>
+            <div class="resultado-nombre" style="${i === 0 ? 'font-size: 1.1rem; color: var(--azul);' : ''}">${r.candidato}</div>
             ${r.sigla ? `<div class="resultado-sigla">${r.sigla}</div>` : ''}
           </div>
           <div class="resultado-barra-wrap">
-            <div class="resultado-barra"><div class="resultado-barra-fill" style="width:${maxV?(r.votos/maxV*100):0}%"></div></div>
-            <div class="resultado-votos">${r.votos} voto(s)</div>
+            <div class="resultado-barra"><div class="resultado-barra-fill" style="width:${maxV?(r.votos/maxV*100):0}%; background: ${i === 0 ? 'linear-gradient(90deg, #f5a623, #ff8c00)' : 'linear-gradient(90deg, var(--azul), var(--azul-c))'}"></div></div>
+            <div class="resultado-votos"><strong>${r.votos}</strong> voto(s)</div>
           </div>
         </div>`).join('');
     }

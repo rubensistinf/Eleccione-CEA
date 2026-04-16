@@ -405,13 +405,26 @@
         document.getElementById('box-instrucciones').style.display = 'none';
         return;
       } else {
-        // Votación ABIERTA
-        banner.style.cssText = 'display:flex;margin-bottom:20px;padding:18px 24px;border-radius:16px;align-items:center;gap:14px;background:linear-gradient(135deg,#14532d,#166534);border:1px solid #16a34a;';
-        document.getElementById('banner-icono').textContent = '🟢';
-        document.getElementById('banner-titulo').style.color = '#4ade80';
-        document.getElementById('banner-titulo').textContent = '¡Votación en Curso!';
-        document.getElementById('banner-subtitulo').style.color = 'rgba(255,255,255,0.75)';
-        document.getElementById('banner-subtitulo').textContent = `${estado.nombre} — Selecciona tu candidato y emite tu voto.`;
+        // Votación ABIERTA o PUBLICADA
+        if (estado.resultados_publicados) {
+          banner.style.cssText = 'display:flex;margin-bottom:20px;padding:18px 24px;border-radius:16px;align-items:center;gap:14px;background:linear-gradient(135deg,#001f5b,#003580);border:2px solid #f5a623;';
+          document.getElementById('banner-icono').textContent = '🏆';
+          document.getElementById('banner-titulo').style.color = '#f5a623';
+          document.getElementById('banner-titulo').textContent = '¡Resultados Oficiales Publicados!';
+          document.getElementById('banner-subtitulo').style.color = 'rgba(255,255,255,0.7)';
+          document.getElementById('banner-subtitulo').textContent = `${estado.nombre} — El proceso ha finalizado. Consulta los ganadores abajo.`;
+          document.getElementById('seccion-votacion').style.display = 'none';
+          document.getElementById('seccion-resultados').style.display = 'block';
+          cargarResultados();
+          return;
+        } else {
+          banner.style.cssText = 'display:flex;margin-bottom:20px;padding:18px 24px;border-radius:16px;align-items:center;gap:14px;background:linear-gradient(135deg,#14532d,#166534);border:1px solid #16a34a;';
+          document.getElementById('banner-icono').textContent = '🟢';
+          document.getElementById('banner-titulo').style.color = '#4ade80';
+          document.getElementById('banner-titulo').textContent = '¡Votación en Curso!';
+          document.getElementById('banner-subtitulo').style.color = 'rgba(255,255,255,0.75)';
+          document.getElementById('banner-subtitulo').textContent = `${estado.nombre} — Selecciona tu candidato y emite tu voto.`;
+        }
       }
     }
 
@@ -520,17 +533,17 @@
       const maxVotos = data.length ? Math.max(...data.map(r => r.votos)) : 1;
       const emojis = ['🥇','🥈','🥉'];
       box.innerHTML = data.map((r, i) => `
-        <div class="resultado-item">
+        <div class="resultado-item" style="${i < 3 ? 'border-left: 4px solid var(--dorado); background: #fffcf0;' : ''}">
           <div class="resultado-pos">${emojis[i] || (i+1)+'º'}</div>
           <div class="resultado-info">
-            <div class="resultado-nombre">${r.candidato}</div>
+            <div class="resultado-nombre" style="${i === 0 ? 'font-size: 1rem; color: var(--azul);' : ''}">${r.candidato}</div>
             ${r.sigla ? `<div class="resultado-sigla">${r.sigla}</div>` : ''}
           </div>
           <div class="resultado-barra-wrap">
             <div class="resultado-barra">
-              <div class="resultado-barra-fill" style="width:${maxVotos ? (r.votos/maxVotos*100) : 0}%"></div>
+              <div class="resultado-barra-fill" style="width:${maxVotos ? (r.votos/maxVotos*100) : 0}%; background: ${i === 0 ? 'linear-gradient(90deg, #f5a623, #ff8c00)' : 'linear-gradient(90deg, var(--azul), var(--azul-c))'}"></div>
             </div>
-            <div class="resultado-votos">${r.votos} voto(s)</div>
+            <div class="resultado-votos"><strong>${r.votos}</strong> voto(s)</div>
           </div>
         </div>`).join('');
     }
