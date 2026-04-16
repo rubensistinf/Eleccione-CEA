@@ -3,86 +3,466 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard Admin</title>
-  <link rel="stylesheet" href="../css/styles.css">
+  <title>Panel Administrador — Elecciones CEA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --azul:#003580; --azul-claro:#0056b3; --dorado:#f5a623;
+      --verde:#16a34a; --rojo:#dc2626; --naranja:#ea580c;
+      --bg:#f0f4ff; --card:#ffffff; --text:#1a1a2e; --muted:#6b7280;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+    header {
+      background:linear-gradient(135deg,var(--azul),#001f5b);
+      padding:14px 24px; display:flex; align-items:center; justify-content:space-between;
+      box-shadow:0 4px 20px rgba(0,53,128,0.4); position:sticky; top:0; z-index:100;
+    }
+    .header-left { display:flex; align-items:center; gap:12px; }
+    .header-logo { width:42px; height:42px; border-radius:50%; border:2px solid var(--dorado); object-fit:cover; }
+    header h1 { color:white; font-size:1rem; font-weight:700; }
+    header p { color:rgba(255,255,255,0.7); font-size:0.75rem; }
+    .btn-salir { background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.25); color:white; padding:8px 16px; border-radius:8px; cursor:pointer; font-size:0.82rem; font-weight:600; }
+
+    main { max-width:1200px; margin:0 auto; padding:30px 20px 60px; }
+
+    /* STATS CARDS */
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:30px; }
+    .stat-card {
+      background:var(--card); border-radius:14px; padding:18px 20px;
+      box-shadow:0 2px 12px rgba(0,53,128,0.08); border:1px solid rgba(0,53,128,0.06);
+      display:flex; align-items:center; gap:14px;
+    }
+    .stat-icono { font-size:2rem; }
+    .stat-valor { font-size:1.6rem; font-weight:800; color:var(--azul); line-height:1; }
+    .stat-label { font-size:0.73rem; color:var(--muted); margin-top:3px; font-weight:500; }
+
+    /* TABS */
+    .main-tabs { display:flex; gap:8px; margin-bottom:28px; flex-wrap:wrap; }
+    .main-tab-btn {
+      padding:10px 20px; border-radius:10px; border:2px solid transparent;
+      cursor:pointer; font-weight:600; font-size:0.85rem; transition:all 0.2s;
+      background:var(--card); color:var(--muted); box-shadow:0 2px 8px rgba(0,53,128,0.07);
+    }
+    .main-tab-btn.active {
+      background:linear-gradient(135deg,var(--azul),#1a3a8c); color:white;
+      box-shadow:0 4px 16px rgba(0,53,128,0.3);
+    }
+    .main-tab-content { display:none; }
+    .main-tab-content.activo { display:block; animation:fadeIn 0.3s ease; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+    .panel-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:24px; }
+    .panel-card {
+      background:var(--card); border-radius:16px;
+      box-shadow:0 4px 20px rgba(0,53,128,0.08); border:1px solid rgba(0,53,128,0.06); overflow:hidden;
+    }
+    .panel-card-header {
+      padding:18px 20px; display:flex; align-items:center; gap:12px;
+    }
+    .panel-card-header.azul { background:linear-gradient(135deg,var(--azul),#1a3a8c); }
+    .panel-card-header.verde { background:linear-gradient(135deg,var(--verde),#15803d); }
+    .panel-card-header.rojo  { background:linear-gradient(135deg,var(--rojo),#991b1b); }
+    .panel-card-header.naranja { background:linear-gradient(135deg,var(--naranja),#c2410c); }
+    .panel-card-header .hicono { font-size:1.5rem; }
+    .panel-card-header h3 { color:white; font-size:0.95rem; font-weight:700; }
+    .panel-card-header p { color:rgba(255,255,255,0.7); font-size:0.75rem; margin-top:2px; }
+    .panel-card-body { padding:22px; }
+
+    .form-group { margin-bottom:14px; }
+    .form-group label { display:block; font-size:0.78rem; font-weight:600; color:var(--azul); margin-bottom:5px; text-transform:uppercase; letter-spacing:0.3px; }
+    .form-group input, .form-group select {
+      width:100%; padding:11px 14px; border:2px solid #e5e7eb; border-radius:10px;
+      font-size:0.9rem; transition:border-color 0.2s; font-family:'Inter',sans-serif; background:#fafafe;
+    }
+    .form-group input:focus, .form-group select:focus { outline:none; border-color:var(--azul); background:white; }
+
+    .btn-action {
+      width:100%; padding:12px; border:none; border-radius:10px;
+      font-size:0.9rem; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif; transition:all 0.3s; margin-bottom:8px;
+    }
+    .btn-azul { background:linear-gradient(135deg,var(--azul),var(--azul-claro)); color:white; }
+    .btn-azul:hover { transform:translateY(-1px); box-shadow:0 4px 14px rgba(0,53,128,0.35); }
+    .btn-verde { background:linear-gradient(135deg,var(--verde),#15803d); color:white; }
+    .btn-verde:hover { transform:translateY(-1px); box-shadow:0 4px 14px rgba(22,163,74,0.35); }
+    .btn-rojo { background:linear-gradient(135deg,var(--rojo),#991b1b); color:white; }
+    .btn-rojo:hover { transform:translateY(-1px); box-shadow:0 4px 14px rgba(220,38,38,0.35); }
+    .btn-naranja { background:linear-gradient(135deg,var(--naranja),#c2410c); color:white; }
+    .btn-naranja:hover { transform:translateY(-1px); box-shadow:0 4px 14px rgba(234,88,12,0.35); }
+    .btn-dorado { background:linear-gradient(135deg,var(--dorado),#e08800); color:#1a1a2e; }
+    .btn-dorado:hover { transform:translateY(-1px); box-shadow:0 4px 14px rgba(245,166,35,0.4); }
+
+    .msg-box { margin-top:10px; padding:10px 14px; border-radius:8px; font-size:0.83rem; font-weight:500; display:none; }
+    .msg-box.show { display:block; }
+    .msg-box.ok { background:#f0fdf4; color:#16a34a; border:1px solid #bbf7d0; }
+    .msg-box.error { background:#fef2f2; color:var(--rojo); border:1px solid #fecaca; }
+    .msg-box.info { background:#eff6ff; color:var(--azul-claro); border:1px solid #bfdbfe; }
+
+    /* ELECCION STATUS */
+    .eleccion-item {
+      background:#f8faff; border:1px solid rgba(0,53,128,0.1); border-radius:10px;
+      padding:14px 16px; margin-bottom:10px; display:flex; align-items:center; gap:12px;
+    }
+    .eleccion-nombre { font-weight:700; font-size:0.9rem; flex:1; }
+    .eleccion-id { font-size:0.75rem; color:var(--muted); }
+    .badge-estado { padding:4px 12px; border-radius:20px; font-size:0.73rem; font-weight:700; }
+    .badge-abierta { background:#dcfce7; color:#15803d; }
+    .badge-cerrada { background:#fef2f2; color:var(--rojo); }
+    .btn-toggle {
+      padding:7px 14px; border:none; border-radius:8px; cursor:pointer; font-size:0.78rem;
+      font-weight:700; transition:all 0.2s; font-family:'Inter',sans-serif;
+    }
+    .btn-toggle.cerrar { background:#fef2f2; color:var(--rojo); border:1px solid #fecaca; }
+    .btn-toggle.abrir { background:#f0fdf4; color:var(--verde); border:1px solid #bbf7d0; }
+
+    /* MESAS */
+    .mesa-item {
+      background:#f8faff; border:1px solid rgba(0,53,128,0.1); border-radius:10px;
+      padding:12px 16px; margin-bottom:8px; display:flex; align-items:center; gap:10px;
+    }
+    .mesa-num { font-weight:800; font-size:1.1rem; color:var(--azul); width:36px; }
+    .mesa-jefe { font-size:0.8rem; color:var(--muted); flex:1; }
+    .mesa-jefe strong { color:var(--text); display:block; }
+
+    /* RESULTADOS */
+    .resultado-item {
+      background:white; border-radius:12px; padding:16px 18px; margin-bottom:12px;
+      display:flex; align-items:center; gap:14px; box-shadow:0 2px 8px rgba(0,53,128,0.07);
+    }
+    .resultado-pos { font-size:1.4rem; width:32px; text-align:center; }
+    .resultado-info { flex:1; }
+    .resultado-nombre { font-weight:700; font-size:0.9rem; }
+    .resultado-sigla { font-size:0.73rem; font-weight:600; color:var(--azul); }
+    .resultado-barra-wrap { flex:2; }
+    .resultado-barra { height:10px; background:#e5e7eb; border-radius:5px; overflow:hidden; margin-bottom:4px; }
+    .resultado-barra-fill { height:100%; background:linear-gradient(90deg,var(--azul),var(--dorado)); transition:width 0.8s ease; border-radius:5px; }
+    .resultado-votos { font-size:0.78rem; color:var(--muted); text-align:right; }
+  </style>
 </head>
 <body>
-  <header class="main-header">
-    <div class="header-content">
-      <div class="header-left">
-        <h1>Panel de Administrador</h1>
+
+<header>
+  <div class="header-left">
+    <img src="../imagenes/logo.jpg" alt="Logo" class="header-logo" onerror="this.src='https://placehold.co/42x42/003580/f5a623?text=CEA'">
+    <div>
+      <h1>Panel de Administrador</h1>
+      <p>Elecciones Estudiantiles CEA — Control Total</p>
+    </div>
+  </div>
+  <button class="btn-salir" onclick="cerrarSesion()">Salir 🚪</button>
+</header>
+
+<main>
+  <!-- STATS -->
+  <div class="stats-grid" id="stats-grid">
+    <div class="stat-card"><span class="stat-icono">👥</span><div><div class="stat-valor" id="st-votantes">—</div><div class="stat-label">Votantes Inscritos</div></div></div>
+    <div class="stat-card"><span class="stat-icono">✅</span><div><div class="stat-valor" id="st-habilitados">—</div><div class="stat-label">Habilitados</div></div></div>
+    <div class="stat-card"><span class="stat-icono">🗳️</span><div><div class="stat-valor" id="st-votos">—</div><div class="stat-label">Votos Emitidos</div></div></div>
+    <div class="stat-card"><span class="stat-icono">📊</span><div><div class="stat-valor" id="st-participacion">—</div><div class="stat-label">Participación</div></div></div>
+    <div class="stat-card"><span class="stat-icono">🏆</span><div><div class="stat-valor" id="st-candidatos">—</div><div class="stat-label">Candidatos</div></div></div>
+  </div>
+
+  <!-- TABS -->
+  <div class="main-tabs">
+    <button class="main-tab-btn active" onclick="activarTab('eleccion')">🗳️ Elecciones</button>
+    <button class="main-tab-btn" onclick="activarTab('mesas')">🪑 Mesas y Jefes</button>
+    <button class="main-tab-btn" onclick="activarTab('resultados')">📊 Resultados</button>
+  </div>
+
+  <!-- ─── TAB ELECCIONES ─── -->
+  <div class="main-tab-content activo" id="tab-eleccion">
+    <div class="panel-grid">
+
+      <!-- CREAR ELECCIÓN -->
+      <div class="panel-card">
+        <div class="panel-card-header azul">
+          <span class="hicono">➕</span>
+          <div><h3>Crear Nueva Elección</h3><p>Abre un nuevo proceso electoral</p></div>
+        </div>
+        <div class="panel-card-body">
+          <div class="form-group">
+            <label>Nombre de la Elección</label>
+            <input type="text" id="nueva-eleccion-nombre" placeholder="Ej: Elecciones CEA 2025">
+          </div>
+          <button class="btn-action btn-azul" onclick="crearEleccion()">🗳️ Crear Elección</button>
+          <div class="msg-box" id="msg-eleccion"></div>
+        </div>
       </div>
-      <nav>
-        <button onclick="cerrarSesion()" style="background:transparent; color:white; border:none; cursor:pointer; font-weight:bold;">Cerrar Sesión</button>
-      </nav>
-    </div>
-  </header>
-  <main style="padding: 20px;">
-    <h2>Control de Elecciones</h2>
-    
-    <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-      <h3>Crear Nueva Elección</h3>
-      <input type="text" id="nueva-eleccion-nombre" placeholder="Nombre de Elección" style="padding:8px; width: 300px;">
-      <button onclick="crearEleccion()" style="padding:8px 15px;">Crear</button>
-      <div id="msg-eleccion" style="color:green; margin-top:10px;"></div>
-    </div>
 
-    <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-      <h3>Asignar Mesas y Jefes</h3>
-      <input type="number" id="mesa-eleccion-id" placeholder="ID. Elección">
-      <input type="number" id="mesa-numero" placeholder="N° de Mesa">
-      <button onclick="crearMesa()" style="padding:8px 15px;">Crear Mesa</button>
-      <div id="msg-mesa" style="color:green; margin-top:10px;"></div>
-    </div>
+      <!-- LISTA Y CONTROL DE ELECCIONES -->
+      <div class="panel-card">
+        <div class="panel-card-header azul">
+          <span class="hicono">📋</span>
+          <div><h3>Control de Elecciones</h3><p>Abrir o cerrar votaciones activas</p></div>
+        </div>
+        <div class="panel-card-body">
+          <div id="lista-elecciones" style="min-height:60px;">
+            <div style="color:var(--muted);font-size:0.85rem;text-align:center;padding:20px;">Cargando...</div>
+          </div>
+          <button class="btn-action btn-azul" onclick="cargarElecciones()" style="margin-top:8px;">🔄 Actualizar</button>
+        </div>
+      </div>
 
-    <div style="background: #f9f9f9; padding: 20px; border-radius: 8px;">
-      <h3>Finalizar y Publicar Resultados</h3>
-      <input type="number" id="pub-eleccion-id" placeholder="ID de Elección">
-      <button onclick="publicarResultados()" style="padding:8px 15px; background: red; color: white;">Publicar Resultados Definitivos</button>
-      <div id="msg-pub" style="margin-top:10px;"></div>
     </div>
-  </main>
-  
-  <script src="../js/api.js"></script>
-  <script>
-    // Validar Rol
-    if(localStorage.getItem('user_rol') !== 'admin') cerrarSesion();
+  </div>
 
-    async function crearEleccion() {
-        const nombre = document.getElementById('nueva-eleccion-nombre').value;
-        const res = await apiFetch('/admin/elecciones', {
-            method: 'POST',
-            body: JSON.stringify({ nombre })
-        });
-        if(res && res.ok){
-            const data = await res.json();
-            document.getElementById('msg-eleccion').innerText = `Elección creada con ID: ${data.id}`;
-        }
+  <!-- ─── TAB MESAS ─── -->
+  <div class="main-tab-content" id="tab-mesas">
+    <div class="panel-grid">
+
+      <!-- AGREGAR MESAS -->
+      <div class="panel-card">
+        <div class="panel-card-header naranja">
+          <span class="hicono">🪑</span>
+          <div><h3>Gestionar Mesas</h3><p>Crear mesas y ver cuántas hay</p></div>
+        </div>
+        <div class="panel-card-body">
+          <div class="form-group">
+            <label>ID de Elección</label>
+            <input type="number" id="mesa-eleccion-id" placeholder="1" oninput="cargarMesas()">
+          </div>
+          <div class="form-group">
+            <label>Número de Mesa a Crear</label>
+            <input type="number" id="mesa-numero" placeholder="Ej: 3">
+          </div>
+          <button class="btn-action btn-naranja" onclick="crearMesa()">➕ Agregar Mesa</button>
+          <div class="msg-box" id="msg-mesa"></div>
+
+          <div style="margin-top:20px;">
+            <div style="font-size:0.82rem;font-weight:700;color:var(--azul);margin-bottom:10px;">📋 Mesas actuales:</div>
+            <div id="lista-mesas">
+              <div style="color:var(--muted);font-size:0.82rem;">Ingresa el ID de elección para ver las mesas</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ASIGNAR JEFE DE MESA -->
+      <div class="panel-card">
+        <div class="panel-card-header naranja">
+          <span class="hicono">👤</span>
+          <div><h3>Asignar Jefes de Mesa</h3><p>Conectar jefes con sus mesas</p></div>
+        </div>
+        <div class="panel-card-body">
+          <div class="form-group">
+            <label>Mesa</label>
+            <select id="asig-mesa-id">
+              <option value="">— Primero carga las mesas (pestaña izquierda) —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Jefe de Mesa</label>
+            <select id="asig-jefe-id">
+              <option value="">Cargando jefes...</option>
+            </select>
+          </div>
+          <button class="btn-action btn-naranja" onclick="asignarJefe()">✅ Asignar Jefe</button>
+          <div class="msg-box" id="msg-jefe"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ─── TAB RESULTADOS ─── -->
+  <div class="main-tab-content" id="tab-resultados">
+    <div class="panel-card" style="max-width:700px;">
+      <div class="panel-card-header verde">
+        <span class="hicono">📊</span>
+        <div><h3>Resultados Electorales</h3><p>Actualización automática cada 5 segundos</p></div>
+      </div>
+      <div class="panel-card-body">
+        <div id="resultados-box" style="margin-bottom:20px;">
+          <div style="color:var(--muted);text-align:center;padding:20px;">Cargando resultados...</div>
+        </div>
+        <button class="btn-action btn-rojo" onclick="publicarResultados()">🔒 Cerrar y Publicar Resultados Oficiales</button>
+        <div class="form-group" style="margin-top:10px;">
+          <label>ID de Elección a Cerrar</label>
+          <input type="number" id="pub-eleccion-id" placeholder="1">
+        </div>
+        <div class="msg-box" id="msg-pub"></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script src="../js/api.js"></script>
+<script>
+  if (localStorage.getItem('user_rol') !== 'admin') cerrarSesion();
+
+  function activarTab(nombre) {
+    document.querySelectorAll('.main-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.main-tab-content').forEach(c => c.classList.remove('activo'));
+    event.target.classList.add('active');
+    document.getElementById('tab-' + nombre).classList.add('activo');
+    if (nombre === 'eleccion') cargarElecciones();
+    if (nombre === 'mesas') { cargarJefes(); }
+    if (nombre === 'resultados') { cargarResultados(); setInterval(cargarResultados, 5000); }
+  }
+
+  function mostrarMsg(id, texto, tipo) {
+    const el = document.getElementById(id);
+    el.textContent = texto; el.className = 'msg-box show ' + tipo;
+  }
+
+  // ─── STATS ───
+  async function cargarStats() {
+    const r = await apiFetch('/admin/stats', { method: 'GET' });
+    if (r && r.ok) {
+      const d = await r.json();
+      document.getElementById('st-votantes').textContent = d.total_votantes;
+      document.getElementById('st-habilitados').textContent = d.total_habilitados;
+      document.getElementById('st-votos').textContent = d.total_votos;
+      document.getElementById('st-participacion').textContent = d.participacion + '%';
+      document.getElementById('st-candidatos').textContent = d.total_candidatos;
     }
+  }
 
-    async function crearMesa() {
-        const eleccion_id = document.getElementById('mesa-eleccion-id').value;
-        const numero = document.getElementById('mesa-numero').value;
-        const res = await apiFetch('/admin/mesas', {
-            method: 'POST',
-            body: JSON.stringify({ eleccion_id: parseInt(eleccion_id), numero: parseInt(numero) })
-        });
-        if(res && res.ok){
-            const data = await res.json();
-            document.getElementById('msg-mesa').innerText = `Mesa ${data.numero} creada.`;
-        }
+  // ─── ELECCIONES ───
+  async function crearEleccion() {
+    const nombre = document.getElementById('nueva-eleccion-nombre').value.trim();
+    if (!nombre) { mostrarMsg('msg-eleccion', '❌ Ingresa un nombre.', 'error'); return; }
+    const r = await apiFetch('/admin/elecciones', { method:'POST', body:JSON.stringify({ nombre }) });
+    if (r && r.ok) {
+      const d = await r.json();
+      mostrarMsg('msg-eleccion', `✅ Elección creada — ID: ${d.id}`, 'ok');
+      document.getElementById('nueva-eleccion-nombre').value = '';
+      cargarElecciones();
+      cargarStats();
+    } else {
+      mostrarMsg('msg-eleccion', '❌ Error al crear.', 'error');
     }
+  }
 
-    async function publicarResultados() {
-        const eleccion_id = document.getElementById('pub-eleccion-id').value;
-        const res = await apiFetch(`/admin/publicar-resultados?eleccion_id=${eleccion_id}`, {
-            method: 'POST'
-        });
-        if(res && res.ok) {
-            document.getElementById('msg-pub').innerText = "Resultados publicados con éxito.";
-            document.getElementById('msg-pub').style.color = "green";
-        }
+  async function cargarElecciones() {
+    const r = await apiFetch('/admin/elecciones', { method:'GET' });
+    const cont = document.getElementById('lista-elecciones');
+    if (r && r.ok) {
+      const data = await r.json();
+      if (!data.length) { cont.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;text-align:center;padding:20px;">No hay elecciones creadas aún.</div>'; return; }
+      cont.innerHTML = data.map(e => `
+        <div class="eleccion-item">
+          <div>
+            <div class="eleccion-nombre">${e.nombre}</div>
+            <div class="eleccion-id">ID: ${e.id}</div>
+          </div>
+          <span class="badge-estado ${e.activa ? 'badge-abierta' : 'badge-cerrada'}">${e.activa ? '🟢 Abierta' : '🔴 Cerrada'}</span>
+          <button class="btn-toggle ${e.activa ? 'cerrar' : 'abrir'}" onclick="toggleEleccion(${e.id})">
+            ${e.activa ? 'Cerrar' : 'Abrir'}
+          </button>
+        </div>`).join('');
     }
-  </script>
+  }
+
+  async function toggleEleccion(id) {
+    const r = await apiFetch(`/admin/elecciones/${id}/toggle`, { method:'POST' });
+    if (r && r.ok) {
+      const d = await r.json();
+      cargarElecciones();
+    }
+  }
+
+  // ─── MESAS ───
+  async function crearMesa() {
+    const eleccion_id = parseInt(document.getElementById('mesa-eleccion-id').value);
+    const numero = parseInt(document.getElementById('mesa-numero').value);
+    if (!eleccion_id || !numero) { mostrarMsg('msg-mesa','❌ Completa los campos.','error'); return; }
+    const r = await apiFetch('/admin/mesas', { method:'POST', body:JSON.stringify({ eleccion_id, numero }) });
+    if (r && r.ok) {
+      mostrarMsg('msg-mesa', `✅ Mesa ${numero} creada.`, 'ok');
+      document.getElementById('mesa-numero').value = '';
+      cargarMesas();
+    } else mostrarMsg('msg-mesa','❌ Error al crear mesa.','error');
+  }
+
+  async function cargarMesas() {
+    const eleccion_id = document.getElementById('mesa-eleccion-id').value;
+    if (!eleccion_id) return;
+    const r = await apiFetch(`/admin/mesas/${eleccion_id}`, { method:'GET' });
+    const cont = document.getElementById('lista-mesas');
+    const selectMesa = document.getElementById('asig-mesa-id');
+    if (r && r.ok) {
+      const data = await r.json();
+      if (!data.length) {
+        cont.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;">No hay mesas para esta elección.</div>';
+        selectMesa.innerHTML = '<option value="">No hay mesas</option>';
+        return;
+      }
+      cont.innerHTML = data.map(m => `
+        <div class="mesa-item">
+          <div class="mesa-num">${m.numero}</div>
+          <div class="mesa-jefe">
+            <strong>Mesa ${m.numero}</strong>
+            ${m.jefe ? '👤 ' + m.jefe : '<span style="color:var(--naranja);">Sin jefe asignado</span>'}
+          </div>
+          <div style="font-size:0.72rem;color:var(--muted);">ID: ${m.id}</div>
+        </div>`).join('');
+      selectMesa.innerHTML = data.map(m => `<option value="${m.id}">Mesa ${m.numero} (ID: ${m.id})</option>`).join('');
+    }
+  }
+
+  async function cargarJefes() {
+    const r = await apiFetch('/admin/usuarios-jefe', { method:'GET' });
+    const sel = document.getElementById('asig-jefe-id');
+    if (r && r.ok) {
+      const data = await r.json();
+      if (!data.length) { sel.innerHTML = '<option value="">No hay usuarios con rol jefe</option>'; return; }
+      sel.innerHTML = data.map(j => `<option value="${j.id}">${j.correo}</option>`).join('');
+    }
+  }
+
+  async function asignarJefe() {
+    const mesa_id = parseInt(document.getElementById('asig-mesa-id').value);
+    const usuario_id = parseInt(document.getElementById('asig-jefe-id').value);
+    if (!mesa_id || !usuario_id) { mostrarMsg('msg-jefe','❌ Selecciona mesa y jefe.','error'); return; }
+    const r = await apiFetch('/admin/asignar-jefe', { method:'POST', body:JSON.stringify({ mesa_id, usuario_id }) });
+    if (r && r.ok) {
+      mostrarMsg('msg-jefe','✅ Jefe asignado correctamente.','ok');
+      cargarMesas();
+    } else mostrarMsg('msg-jefe','❌ Error al asignar.','error');
+  }
+
+  // ─── RESULTADOS ───
+  async function cargarResultados() {
+    const r = await apiFetch('/admin/resultados', { method:'GET' });
+    if (r && r.ok) {
+      const data = await r.json();
+      const box = document.getElementById('resultados-box');
+      const maxV = data.length ? Math.max(...data.map(d => d.votos)) : 1;
+      const emojis = ['🥇','🥈','🥉'];
+      if (!data.length) { box.innerHTML = '<div style="text-align:center;color:var(--muted);padding:20px;">No hay votos registrados aún.</div>'; return; }
+      box.innerHTML = data.map((r, i) => `
+        <div class="resultado-item">
+          <div class="resultado-pos">${emojis[i] || (i+1)+'°'}</div>
+          <div class="resultado-info">
+            <div class="resultado-nombre">${r.candidato}</div>
+            ${r.sigla ? `<div class="resultado-sigla">${r.sigla}</div>` : ''}
+          </div>
+          <div class="resultado-barra-wrap">
+            <div class="resultado-barra"><div class="resultado-barra-fill" style="width:${maxV?(r.votos/maxV*100):0}%"></div></div>
+            <div class="resultado-votos">${r.votos} voto(s)</div>
+          </div>
+        </div>`).join('');
+    }
+  }
+
+  async function publicarResultados() {
+    const id = document.getElementById('pub-eleccion-id').value;
+    if (!id) { mostrarMsg('msg-pub','❌ Ingresa el ID de la elección.','error'); return; }
+    if (!confirm('¿Seguro? Esto cerrará la votación de forma definitiva.')) return;
+    const r = await apiFetch(`/admin/publicar-resultados?eleccion_id=${id}`, { method:'POST' });
+    if (r && r.ok) {
+      mostrarMsg('msg-pub','🔒 Elección cerrada y resultados publicados.','ok');
+      cargarElecciones();
+    } else mostrarMsg('msg-pub','❌ Error al publicar.','error');
+  }
+
+  // INIT
+  cargarStats();
+  cargarElecciones();
+  setInterval(cargarStats, 10000);
+</script>
 </body>
 </html>
