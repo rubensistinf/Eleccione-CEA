@@ -1,23 +1,24 @@
-// 🛡️ CEA ELECCIONES - MOTOR DE RED v3.0 INDESTRUCTIBLE
-const SYSTEM_VERSION = "3.0.0";
+// 🛡️ CEA ELECCIONES - MOTOR DE RED v3.1.0 INDESTRUCTIBLE
+const SYSTEM_VERSION = "3.1.0";
 
 // FUERZA RECARGA TOTAL Y LIMPIEZA DE "GHOST SERVERS"
 if (localStorage.getItem("cea_v") !== SYSTEM_VERSION) {
     const oldUrl = localStorage.getItem("custom_api_url") || "";
     if (oldUrl.includes("elecciones-cea-backend")) {
-        localStorage.removeItem("custom_api_url"); // Purga total del servidor con "S"
+        localStorage.removeItem("custom_api_url"); 
     }
     localStorage.setItem("cea_v", SYSTEM_VERSION);
-    console.log("🚀 Versión 3.0 detectada. Reiniciando con sistema indestructible...");
+    console.log("🚀 Nueva versión 3.1 detectada. Optimizando conexión...");
     location.reload(true);
 }
 
 const POSSIBLE_BACKENDS = [
     localStorage.getItem("custom_api_url"),
-    "https://eleccione-cea-backend.onrender.com", // ESTABLE
+    "https://eleccione-cea-backend.onrender.com", 
     "https://votacion-cea-backend.onrender.com",
+    "https://cea- pailon-backend.onrender.com",
     window.location.origin
-].filter(url => url && !url.includes("elecciones-cea-backend")); // BLACKLIST ESTRICTA DEL SERVIDOR CON "S"
+].filter(url => url && !url.includes("elecciones-cea-backend")); 
 
 let API_URL = POSSIBLE_BACKENDS[0] || "https://eleccione-cea-backend.onrender.com";
 let buscandoPromise = null;
@@ -26,15 +27,16 @@ async function descubrirBackend() {
     if (buscandoPromise) return buscandoPromise;
     
     buscandoPromise = (async () => {
-        debugLog("🔍 Buscando servidor estable...");
+        debugLog("🔍 Despertando servidores (puede tardar 40s)...");
         for (const url of POSSIBLE_BACKENDS) {
             try {
                 const controller = new AbortController();
-                const id = setTimeout(() => controller.abort(), 3000); 
+                // Tiempo de espera por servidor aumentado para Render
+                const id = setTimeout(() => controller.abort(), 6000); 
                 const res = await fetch(`${url}/ping`, { signal: controller.signal });
                 clearTimeout(id);
                 if (res.ok) {
-                    debugLog(`✨ ¡Conectado a ${url}!`);
+                    debugLog(`✨ Servidor encontrado: ${url}`);
                     localStorage.setItem("custom_api_url", url);
                     API_URL = url;
                     return true;
@@ -50,11 +52,12 @@ async function descubrirBackend() {
 }
 
 async function apiFetch(endpoint, options = {}) {
+  // Timeout aumentado a 60 segundos para permitir el "Cold Start" de Render
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 20000); 
+  const timeoutId = setTimeout(() => controller.abort(), 60000); 
   
   try {
-    debugLog(`📡 Pidiendo: ${endpoint}...`);
+    debugLog(`📡 Solicitando: ${endpoint}...`);
     options.headers = getAuthHeaders();
     options.signal = controller.signal;
     
@@ -62,31 +65,27 @@ async function apiFetch(endpoint, options = {}) {
     clearTimeout(timeoutId);
 
     if (res.status === 401) {
-      debugLog(`🔐 Sesión expirada.`);
+      debugLog(`🔐 Sesión caducada.`);
       cerrarSesion();
       return;
     }
     
-    // Si el servidor responde con error de servidor, intentamos buscar otro
     if (res.status >= 500) {
         throw new Error("Server Error");
     }
 
-    debugLog(`✅ OK (${res.status})`);
+    debugLog(`✅ Conexión Ok (${res.status})`);
     return res;
   } catch (err) {
     clearTimeout(timeoutId);
-    debugLog("🚨 Error de red detectado. Iniciando autoconmutación...");
+    debugLog("🚨 Servidor en reposo. Intentando despertar...");
     
     const encontrado = await descubrirBackend();
     if (encontrado) {
-        debugLog("🔄 Reintentando petición con nuevo servidor...");
-        // Clonar el body si existe, ya que fetch consume los streams
-        if (options.body && typeof options.body === 'string') {
-            // Es un string JSON, podemos reusarlo
-        } else if (options.body) {
-            debugLog("⚠️ No se puede reintentar petición con stream de body. Recarga manual necesaria.");
-            return { ok: false, status: 503, json: async() => ({detail: "Error de red. Intenta de nuevo."})};
+        debugLog("🔄 Servidor despierto. Reintentando...");
+        if (options.body && typeof options.body !== 'string') {
+            debugLog("⚠️ Error de reintento. Por favor pulsa el botón de nuevo.");
+            return { ok: false, status: 503, json: async() => ({detail: "Reintenta ahora, el servidor ya despertó."})};
         }
         return apiFetch(endpoint, options);
     }
@@ -94,7 +93,7 @@ async function apiFetch(endpoint, options = {}) {
     return { 
         ok: false, 
         status: 503, 
-        json: async () => ({ detail: "Sin conexión. Revisa el Monitor de Sistema abajo." }) 
+        json: async () => ({ detail: "El servidor no responde. Pulsa REPARAR CONEXIÓN." }) 
     };
   }
 }
@@ -112,7 +111,7 @@ function debugLog(msg) {
     if (el) {
         const time = new Date().toLocaleTimeString();
         el.innerHTML = `<div style="border-bottom:1px solid #334155; padding:2px 0;"><span style="color:#64748b;">[${time}]</span> ${msg}</div>` + el.innerHTML;
-        if (el.innerHTML.length > 3000) el.innerHTML = el.innerHTML.substring(0, 3000);
+        if (el.innerHTML.length > 5000) el.innerHTML = el.innerHTML.substring(0, 5000);
     }
 }
 
