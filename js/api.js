@@ -1,3 +1,10 @@
+// SISTEMA DE CONTROL DE VERSIONES - FUERZA RECARGA DE CACHE
+const SYSTEM_VERSION = "2.0.1";
+if (localStorage.getItem("cea_v") !== SYSTEM_VERSION) {
+    localStorage.setItem("cea_v", SYSTEM_VERSION);
+    location.reload(true);
+}
+
 const POSSIBLE_BACKENDS = [
     localStorage.getItem("custom_api_url"),
     window.location.origin, // Probar si el backend está en el mismo dominio
