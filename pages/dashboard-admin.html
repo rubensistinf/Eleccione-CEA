@@ -612,7 +612,8 @@
       cargarMesas();
     } else if (r) {
       const err = await r.json();
-      mostrarMsg('msg-jefe','❌ ' + err.detail,'error');
+      const det = Array.isArray(err.detail) ? 'Asegúrate de actualizar el backend (git pull y reiniciar Uvicorn).' : err.detail;
+      mostrarMsg('msg-jefe','❌ ' + det,'error');
     }
   }
 
