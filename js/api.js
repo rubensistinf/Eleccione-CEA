@@ -1,31 +1,40 @@
 const POSSIBLE_BACKENDS = [
     localStorage.getItem("custom_api_url"),
-    "https://elecciones-cea-backend.onrender.com",
+    window.location.origin, // Probar si el backend está en el mismo dominio
     "https://eleccione-cea-backend.onrender.com",
+    "https://elecciones-cea-backend.onrender.com",
     "https://votacion-cea-backend.onrender.com",
     "https://votacion-backend.onrender.com"
 ].filter(Boolean);
 
-let API_URL = POSSIBLE_BACKENDS[0] || "https://elecciones-cea-backend.onrender.com";
+let API_URL = POSSIBLE_BACKENDS[0] || "https://eleccione-cea-backend.onrender.com";
+let buscando = false;
 
 async function descubrirBackend() {
-    console.log("🔍 Iniciando auto-descubrimiento de Backend...");
+    if (buscando) return;
+    buscando = true;
+    console.log("🔍 Buscando motor del sistema (Backend)...");
+    
     for (const url of POSSIBLE_BACKENDS) {
         try {
+            console.log(`📡 Probando conexión con: ${url}...`);
             const controller = new AbortController();
-            const id = setTimeout(() => controller.abort(), 2000); // 2s timeout
+            const id = setTimeout(() => controller.abort(), 3500); // 3.5s por intento
             const res = await fetch(`${url}/admin/elecciones`, { signal: controller.signal });
             clearTimeout(id);
-            if (res.ok || res.status === 401) {
-                console.log("✅ Backend encontrado en:", url);
+            if (res.ok || res.status === 401 || res.status === 403) {
+                console.log("✅ ¡Conexión establecida con éxito!", url);
                 localStorage.setItem("custom_api_url", url);
                 API_URL = url;
+                buscando = false;
                 return true;
             }
         } catch (e) {
-            console.warn(`❌ No hay respuesta en: ${url}`);
+            console.warn(`❌ Falló ${url}`);
         }
     }
+    buscando = false;
+    console.error("⛔ No se encontró ningún servidor activo. Revisa tu panel de Render.");
     return false;
 }
 
