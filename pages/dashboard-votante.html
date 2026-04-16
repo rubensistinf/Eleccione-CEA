@@ -234,6 +234,15 @@
     <p><strong>Instrucciones:</strong> Selecciona el frente de tu preferencia haciendo clic en la tarjeta. Luego presiona el botón EMITIR MI VOTO. Recuerda que <strong>solo puedes votar una vez</strong>.</p>
   </div>
 
+  <!-- BANNER DE ESTADO DE VOTACIÓN -->
+  <div id="banner-votacion" style="display:none;margin-bottom:20px;padding:18px 24px;border-radius:16px;display:none;align-items:center;gap:14px;" >
+    <span id="banner-icono" style="font-size:2rem;"></span>
+    <div>
+      <div id="banner-titulo" style="font-weight:800;font-size:1rem;"></div>
+      <div id="banner-subtitulo" style="font-size:0.82rem;opacity:.8;margin-top:3px;"></div>
+    </div>
+  </div>
+
   <!-- SECCIÓN DE VOTACIÓN -->
   <div id="seccion-votacion">
     <div class="seccion-titulo">
@@ -293,7 +302,8 @@
 
 <script src="../js/api.js"></script>
 <script>
-  if(localStorage.getItem('user_rol') !== 'votante') cerrarSesion();
+  const rol = localStorage.getItem('user_rol');
+  if (rol !== 'votante' && rol !== 'jefe') cerrarSesion();
 
   let candidatoSeleccionado = null;
   let eleccionIdGlobal = null;
@@ -334,8 +344,39 @@
     }
   }
 
-  // ─── CARGAR CANDIDATOS ───
+  // ─── VERIFICAR ESTADO ELECCIÓN Y CARGAR CANDIDATOS ───
   async function cargarCandidatos() {
+    // Primero verificar si la elección está activa
+    const estadoRes = await fetch(`${API_URL}/votante/estado-eleccion`);
+    const banner = document.getElementById('banner-votacion');
+    if (estadoRes.ok) {
+      const estado = await estadoRes.json();
+      eleccionIdGlobal = estado.id;
+      if (!estado.activa) {
+        // Votación cerrada/no iniciada
+        banner.style.cssText = 'display:flex;margin-bottom:20px;padding:18px 24px;border-radius:16px;align-items:center;gap:14px;background:linear-gradient(135deg,#1e3a5f,#2d5282);border:1px solid rgba(245,166,35,0.3);';
+        document.getElementById('banner-icono').textContent = '⏳';
+        document.getElementById('banner-titulo').style.color = '#f5a623';
+        document.getElementById('banner-titulo').textContent = 'La votación aún no ha comenzado';
+        document.getElementById('banner-subtitulo').style.color = 'rgba(255,255,255,0.7)';
+        document.getElementById('banner-subtitulo').textContent = estado.nombre 
+          ? `"${estado.nombre}" — Espera que el Administrador habilite el proceso.`
+          : 'El administrador no ha creado ningún proceso electoral aún.';
+        document.getElementById('seccion-votacion').style.display = 'none';
+        document.getElementById('box-instrucciones').style.display = 'none';
+        return;
+      } else {
+        // Votación ABIERTA
+        banner.style.cssText = 'display:flex;margin-bottom:20px;padding:18px 24px;border-radius:16px;align-items:center;gap:14px;background:linear-gradient(135deg,#14532d,#166534);border:1px solid #16a34a;';
+        document.getElementById('banner-icono').textContent = '🟢';
+        document.getElementById('banner-titulo').style.color = '#4ade80';
+        document.getElementById('banner-titulo').textContent = '¡Votación en Curso!';
+        document.getElementById('banner-subtitulo').style.color = 'rgba(255,255,255,0.75)';
+        document.getElementById('banner-subtitulo').textContent = `${estado.nombre} — Selecciona tu candidato y emite tu voto.`;
+      }
+    }
+
+    // Cargar candidatos solo si la elección está activa
     const res = await apiFetch('/votante/candidatos', { method:'GET' });
     if (res && res.ok) {
       candidatosData = await res.json();
@@ -348,7 +389,7 @@
       }
 
       candidatosData.forEach(c => {
-        eleccionIdGlobal = c.eleccion_id;
+        if (!eleccionIdGlobal) eleccionIdGlobal = c.eleccion_id;
         const foto = c.imagen_base64
           ? `<img src="${c.imagen_base64}" alt="${c.nombre}" class="candidato-foto">`
           : `<div class="candidato-foto-placeholder">🎓</div>`;
