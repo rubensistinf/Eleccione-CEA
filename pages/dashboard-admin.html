@@ -703,17 +703,26 @@
   async function crearEleccion() {
     const nombre = document.getElementById('nueva-eleccion-nombre').value.trim();
     if (!nombre) { mostrarMsg('msg-eleccion','❌ Ingresa un nombre.','error'); return; }
+
+    mostrarMsg('msg-eleccion','⏳ Procesando en el servidor...','info');
     const r = await apiFetch('/admin/elecciones', { method:'POST', body:JSON.stringify({ nombre }) });
+    
     if (r && r.ok) {
       const d = await r.json();
-      mostrarMsg('msg-eleccion', `✅ Elección creada — ID: ${d.id}`, 'ok');
+      mostrarMsg('msg-eleccion', `✅ Elección "${d.nombre}" creada (ID: ${d.id})`, 'ok');
       document.getElementById('nueva-eleccion-nombre').value = '';
-      actualizarIDGlobal(d.id); // Seleccionar automáticamente
+      actualizarIDGlobal(d.id); 
       cargarElecciones();
       cargarEstadoBanner();
       cargarStats();
-      setTimeout(() => activarTab(2), 1000); // Ir al paso 2
-    } else mostrarMsg('msg-eleccion','❌ Error al crear.','error');
+      setTimeout(() => activarTab(2), 1200);
+    } else if (r) {
+      const err = await r.json();
+      const det = Array.isArray(err.detail) ? err.detail.map(e => e.msg).join(", ") : err.detail;
+      mostrarMsg('msg-eleccion', `❌ Error: ${det || 'Fallo desconocido'}`, 'error');
+    } else {
+      mostrarMsg('msg-eleccion', '❌ No hay conexión con el servidor.', 'error');
+    }
   }
 
   async function cargarElecciones() {

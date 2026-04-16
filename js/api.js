@@ -8,34 +8,40 @@ const POSSIBLE_BACKENDS = [
 ].filter(Boolean);
 
 let API_URL = POSSIBLE_BACKENDS[0] || "https://eleccione-cea-backend.onrender.com";
-let buscando = false;
+let buscandoPromise = null;
 
 async function descubrirBackend() {
-    if (buscando) return;
-    buscando = true;
-    console.log("🔍 Buscando motor del sistema (Backend)...");
-    
-    for (const url of POSSIBLE_BACKENDS) {
-        try {
-            console.log(`📡 Probando conexión con: ${url}...`);
-            const controller = new AbortController();
-            const id = setTimeout(() => controller.abort(), 3500); // 3.5s por intento
-            const res = await fetch(`${url}/admin/elecciones`, { signal: controller.signal });
-            clearTimeout(id);
-            if (res.ok || res.status === 401 || res.status === 403) {
-                console.log("✅ ¡Conexión establecida con éxito!", url);
-                localStorage.setItem("custom_api_url", url);
-                API_URL = url;
-                buscando = false;
-                return true;
-            }
-        } catch (e) {
-            console.warn(`❌ Falló ${url}`);
-        }
+    if (buscandoPromise) {
+        console.log("⏳ Ya hay una búsqueda en curso, esperando...");
+        return buscandoPromise;
     }
-    buscando = false;
-    console.error("⛔ No se encontró ningún servidor activo. Revisa tu panel de Render.");
-    return false;
+    
+    buscandoPromise = (async () => {
+        console.log("🔍 Buscando motor del sistema (Backend)...");
+        for (const url of POSSIBLE_BACKENDS) {
+            try {
+                console.log(`📡 Probando conexión con: ${url}...`);
+                const controller = new AbortController();
+                const id = setTimeout(() => controller.abort(), 3500); // 3.5s por intento
+                const res = await fetch(`${url}/admin/elecciones`, { signal: controller.signal });
+                clearTimeout(id);
+                if (res.ok || res.status === 401 || res.status === 403) {
+                    console.log("✅ ¡Conexión establecida!", url);
+                    localStorage.setItem("custom_api_url", url);
+                    API_URL = url;
+                    return true;
+                }
+            } catch (e) {
+                console.warn(`❌ Falló ${url}`);
+            }
+        }
+        console.error("⛔ No se encontró ningún servidor activo. Revisa tu panel de Render.");
+        return false;
+    })();
+
+    const resultado = await buscandoPromise;
+    buscandoPromise = null;
+    return resultado;
 }
 
 // Intentar descubrir si el actual falla
@@ -44,11 +50,6 @@ async function apiFetch(endpoint, options = {}) {
     options.headers = getAuthHeaders();
     let res = await fetch(`${API_URL}${endpoint}`, options);
 
-    // Si no responde o da error de red, intentamos redescubrir
-    if (!res.ok && res.status >= 500) {
-        // Podría ser error interno, no necesariamente URL mal
-    }
-    
     if (res.status === 401) {
       console.warn("🔐 Sesión expirada.");
       localStorage.removeItem("jwt_token");
