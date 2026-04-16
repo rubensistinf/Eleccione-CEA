@@ -637,7 +637,7 @@
   }
 
   async function cargarMesas() {
-    const eleccion_id = activeEleccionId;
+    const eleccion_id = activeEleccionId ? Number(activeEleccionId) : null;
     if (!eleccion_id) return;
     const r = await apiFetch(`/admin/mesas/${eleccion_id}`, { method:'GET' });
     const cont = document.getElementById('lista-mesas');
@@ -688,13 +688,13 @@
   }
 
   async function asignarJefeCI() {
-    const ci = document.getElementById('jefe-ci').value.trim();
-    const eleccion_id = activeEleccionId;
+    const eleccion_id = activeEleccionId ? Number(activeEleccionId) : null;
     if (!ci || !eleccion_id) { mostrarMsg('msg-jefe','❌ Primero debes seleccionar o escribir un ID de Elección válido.','error'); return; }
     const r = await apiFetch('/admin/asignar-jefe-ci', { method:'POST', body:JSON.stringify({ ci, eleccion_id }) });
     if (r && r.ok) {
       const d = await r.json();
-      mostrarMsg('msg-jefe', d.msg, 'ok');
+      const infoMsg = d.msg + "\n\n🔔 RECUERDA: El nuevo Jefe debe CERRAR SESIÓN e INGRESAR NUEVAMENTE para activar sus permisos de Jurado.";
+      mostrarMsg('msg-jefe', infoMsg, 'ok');
       document.getElementById('jefe-ci').value = '';
       document.getElementById('jefe-encontrado').style.display = 'none';
       cargarMesas();
@@ -707,7 +707,7 @@
 
   // ─── SORTEO ───
   async function ejecutarSorteo() {
-    const eleccion_id = activeEleccionId;
+    const eleccion_id = activeEleccionId ? Number(activeEleccionId) : null;
     if (!eleccion_id) { mostrarMsg('msg-sorteo','❌ No hay elección seleccionada.','error'); return; }
     mostrarMsg('msg-sorteo','🎲 Ejecutando sorteo aleatorio...','info');
     const r = await apiFetch(`/admin/distribuir-mesas/${eleccion_id}`, { method:'POST' });
