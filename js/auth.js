@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Importar de api.js
                     if(typeof redirigirPorRol !== 'undefined') redirigirPorRol(rol);
-                    else window.location.href = "/frontend/index.html"; // Por si falla
+                    else window.location.href = "/index.html"; // Por si falla
                 } else {
                     const err = await res.json();
                     mensajeLogin.textContent = err.detail || 'Credenciales incorrectas';

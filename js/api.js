@@ -23,24 +23,23 @@ async function apiFetch(endpoint, options = {}) {
     alert("Sesión expirada o no autorizada. Vuelva a iniciar sesión.");
     localStorage.removeItem("jwt_token");
     localStorage.removeItem("user_rol");
-    window.location.href = "/frontend/index.html";
+    window.location.href = "/index.html";
     return null;
   }
   
   return res;
 }
 
-// Para redirecciones segun rol en login
 function redirigirPorRol(rol) {
-    if (rol === "admin") window.location.href = "/frontend/pages/dashboard-admin.html";
-    else if (rol === "secretaria") window.location.href = "/frontend/pages/dashboard-secretaria.html";
-    else if (rol === "jefe") window.location.href = "/frontend/pages/dashboard-jefe.html";
-    else if (rol === "votante") window.location.href = "/frontend/pages/dashboard-votante.html";
+    if (rol === "admin") window.location.href = "/pages/dashboard-admin.html";
+    else if (rol === "secretaria") window.location.href = "/pages/dashboard-secretaria.html";
+    else if (rol === "jefe") window.location.href = "/pages/dashboard-jefe.html";
+    else if (rol === "votante") window.location.href = "/pages/dashboard-votante.html";
     else alert("Rol desconocido: " + rol);
 }
 
 function cerrarSesion() {
     localStorage.removeItem("jwt_token");
     localStorage.removeItem("user_rol");
-    window.location.href = "/frontend/index.html";
+    window.location.href = "/index.html";
 }
