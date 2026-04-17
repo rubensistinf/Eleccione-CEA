@@ -248,7 +248,39 @@
                     ? `${data.nombre} — Mesa ${miMesaNumero || 'Sin asignar'}`
                     : 'Gestión de Mesa — CEA Pailón';
             }
+
+            // Verificar si hay elección en curso
+            const rElecc = await apiFetch('/votante/estado-eleccion');
+            if (rElecc && rElecc.ok) {
+                const infoElecc = await rElecc.json();
+                if (!infoElecc.activa) {
+                    bloquearMesaCerrada();
+                }
+            } else {
+                // Si retorna error o 404 (No hay elección), bloqueamos
+                bloquearMesaCerrada();
+            }
         })();
+
+        function bloquearMesaCerrada() {
+            const container = document.querySelector('.container');
+            const msgError = `<div style="background:#fef2f2; border:2px dashed #ef4444; color:#991b1b; padding:20px; border-radius:12px; text-align:center; font-weight:700; margin-bottom:20px; box-shadow: 0 4px 15px rgba(220,38,38,0.15);">
+                <div style="font-size:2rem; margin-bottom:10px;">🔒</div>
+                <div style="font-size:1.2rem; margin-bottom:5px;">ELECCIÓN CERRADA / PAUSADA</div>
+                <span style="font-size:0.9rem; font-weight:400;">La votación ha concluido o no hay ninguna elección activa en este momento. El control de mesa está bloqueado por seguridad.</span>
+            </div>`;
+            container.insertAdjacentHTML('afterbegin', msgError);
+            
+            // Bloquear Formularios
+            document.getElementById('ci-votante').disabled = true;
+            document.getElementById('btn-consultar').disabled = true;
+            document.getElementById('btn-habilitar').disabled = true;
+
+            document.getElementById('ci-votante').style.opacity = '0.6';
+            document.getElementById('ci-votante').style.cursor = 'not-allowed';
+            document.getElementById('btn-consultar').style.opacity = '0.6';
+            document.getElementById('btn-consultar').style.cursor = 'not-allowed';
+        }
 
         async function consultar() {
             const ci = document.getElementById('ci-votante').value.trim();
