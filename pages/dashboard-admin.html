@@ -521,15 +521,17 @@
         <div class="panel-card-body">
 
           <!-- BOTONES ACCIÓN -->
-          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap:12px; margin-bottom:24px;">
-            <button class="btn-action btn-azul" onclick="reporteVer('votantes')" style="padding:14px;">👥 Ver Padrón de Estudiantes</button>
-            <button class="btn-action btn-naranja" onclick="reporteVer('candidatos')" style="padding:14px;">🏆 Ver Candidatos Inscritos</button>
-            <button class="btn-action" onclick="reporteVer('jurados')" style="padding:14px; background:linear-gradient(135deg,#6d28d9,#5b21b6); color:white;">⚖️ Ver Jurados y Mesas</button>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap:12px; margin-bottom:12px;">
+            <button class="btn-action btn-azul" onclick="reporteVer('votantes')" style="padding:14px;">👥 Ver Padrón Estudiantil</button>
+            <button class="btn-action btn-naranja" onclick="reporteVer('candidatos')" style="padding:14px;">🏆 Ver Frentes/Candidatos</button>
+            <button class="btn-action" onclick="reporteVer('jurados')" style="padding:14px; background:linear-gradient(135deg,#6d28d9,#5b21b6); color:white;">⚖️ Ver Jurados Designados</button>
+            <button class="btn-action" onclick="reporteVer('resultados')" style="padding:14px; background:linear-gradient(135deg,#047857,#065f46); color:white;">🏅 Ver Votos y Ganador</button>
           </div>
           <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap:12px; margin-bottom:24px;">
-            <button class="btn-action btn-verde" onclick="descargarCSV('votantes')" style="padding:12px;">📥 Descargar Padrón (Excel)</button>
-            <button class="btn-action btn-dorado" onclick="descargarCSV('candidatos')" style="padding:12px;">📥 Descargar Candidatos (Excel)</button>
-            <button class="btn-action" onclick="descargarCSV('jurados')" style="padding:12px; background:linear-gradient(135deg,#6d28d9,#5b21b6); color:white;">📥 Descargar Jurados (Excel)</button>
+            <button class="btn-action btn-verde" onclick="descargarCSV('votantes')" style="padding:12px;">📥 Bajar Padrón (Excel)</button>
+            <button class="btn-action btn-dorado" onclick="descargarCSV('candidatos')" style="padding:12px;">📥 Bajar Candidatos (Excel)</button>
+            <button class="btn-action" onclick="descargarCSV('jurados')" style="padding:12px; background:linear-gradient(135deg,#6d28d9,#5b21b6); color:white;">📥 Bajar Jurados (Excel)</button>
+            <button class="btn-action" onclick="descargarCSV('resultados')" style="padding:12px; background:linear-gradient(135deg,#047857,#065f46); color:white;">📥 Bajar Votos/Ganador (Excel)</button>
           </div>
 
           <!-- TABLA DINÁMICA -->
@@ -1082,7 +1084,13 @@
       titulo: '⚖️ Jurados de Mesa Designados',
       endpoint: '/admin/reportes/jurados',
       headers: ['Nombre del Jurado', 'Usuario/Correo', 'Mesa Asignada'],
-      row: j => `<td style="font-weight:700;">${j.nombre}</td><td style="font-size:0.75rem;color:var(--muted);">${j.correo}</td><td style="text-align:center;"><span style="background:var(--azul);color:white;padding:3px 10px;border-radius:20px;font-weight:700;font-size:0.8rem;">Mesa ${j.mesa}</span></td>`
+      row: (j, i) => `<td style="font-weight:700;">${j.nombre}</td><td style="font-size:0.75rem;color:var(--muted);">${j.correo}</td><td style="text-align:center;"><span style="background:var(--azul);color:white;padding:3px 10px;border-radius:20px;font-weight:700;font-size:0.8rem;">Mesa ${j.mesa}</span></td>`
+    },
+    resultados: {
+      titulo: '🏅 Resultados Oficiales (Votos por Candidato)',
+      endpoint: '/admin/reportes/resultados',
+      headers: ['Orden', 'Candidato / Frente', 'Votos Netos', 'Porcentaje', 'Estado Final'],
+      row: (r, i) => `<td style="text-align:center;font-weight:800;color:var(--muted);font-size:1.1rem;">#${i+1}</td><td><b style="font-size:0.95rem;">${r.candidato}</b><br><span style="font-size:0.75rem;color:white;background:var(--dorado);padding:1px 6px;border-radius:10px;">${r.sigla}</span></td><td style="text-align:center;font-size:1.3rem;font-weight:800;color:var(--azul);">${r.votos}</td><td style="text-align:center;font-weight:600;">${r.porcentaje}%</td><td style="text-align:center;font-weight:800;color:#16a34a;font-size:0.9rem;">${r.estado}</td>`
     }
   };
 
@@ -1110,7 +1118,7 @@
         return;
       }
       tbody.innerHTML = data.map((item, i) => 
-        `<tr style="background:${i%2===0?'#fff':'#f8faff'};border-bottom:1px solid #f1f5f9;">${cfg.row(item)}</tr>`
+        `<tr style="background:${i%2===0?'#fff':'#f8faff'};border-bottom:1px solid #f1f5f9;">${cfg.row(item, i)}</tr>`
       ).join('');
     } else {
       tbody.innerHTML = `<tr><td colspan="${cfg.headers.length}" style="text-align:center;padding:20px;color:var(--rojo);">❌ Error al cargar datos.</td></tr>`;
