@@ -558,7 +558,7 @@
     <p style="font-size:0.75rem; color:var(--muted);">Sistema de Gestión Electoral — CEA Prof. Herman Ortiz Camargo</p>
   </div>
 
-<script src="../js/api.js?v=4.3.5"></script>
+<script src="../js/api.js?v=4.3.6"></script>
 <script>
   // Funciones de Configuración de API
   document.addEventListener('DOMContentLoaded', () => {
@@ -1119,10 +1119,23 @@
 
   async function descargarCSV(entity) {
     const token = localStorage.getItem('jwt_token');
-    const url = `${API_URL}/admin/export/${entity}`;
+    if (!token) { alert('❌ Sesión expirada.'); return; }
+    
+    // Obtener la URL base desde api.js
+    let apiUrl = window.getApiUrl();
+    if (apiUrl.endsWith('/')) apiUrl = apiUrl.slice(0, -1);
+    
+    // El endpoint de candidatos está fuera de /admin/
+    let url = `${apiUrl}/admin/export/${entity}`;
+    
     try {
       const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
-      if (!res.ok) { alert('❌ Error al descargar. Verifica tu sesión.'); return; }
+      if (!res.ok) { 
+          const errText = await res.text();
+          console.error("Error CSV:", errText);
+          alert('❌ Error al descargar. Verifica tu sesión o revisa la consola.'); 
+          return; 
+      }
       const blob = await res.blob();
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -1132,7 +1145,8 @@
       URL.revokeObjectURL(a.href);
       a.remove();
     } catch(e) {
-      alert('❌ Error de conexión al descargar.');
+      console.error(e);
+      alert('❌ Error de conexión al descargar CSV.');
     }
   }
 </script>
