@@ -397,7 +397,7 @@
   function redirigirPorRol(rol) {
     console.log("Iniciando redirección para rol:", rol);
     const base = window.location.origin;
-    const v = "?v=4.3.0"; // Bypass PWA cache
+    const v = "?v=4.3.1"; // Bypass PWA cache
     if (rol === 'admin') window.location.href = base + '/pages/dashboard-admin.html' + v;
     else if (rol === 'secretaria') window.location.href = base + '/pages/dashboard-secretaria.html' + v;
     else if (rol === 'jefe') window.location.href = base + '/pages/dashboard-jefe.html' + v;

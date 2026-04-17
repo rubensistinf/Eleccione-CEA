@@ -1,5 +1,5 @@
 // CEA ELECCIONES - Backend API URL
-const SYSTEM_VERSION = "4.3.0";
+const SYSTEM_VERSION = "4.3.1";
 
 // Fuerza recarga si la versión cambió (solo UNA vez)
 if (localStorage.getItem("cea_v") !== SYSTEM_VERSION) {
@@ -22,7 +22,10 @@ async function apiFetch(endpoint, options = {}) {
     options.headers = { ...headers, ...options.headers };
     options.signal = controller.signal;
     
-    let res = await fetch(`${API_URL}${endpoint}`, options);
+    const customUrl = localStorage.getItem("custom_api_url");
+    const activeUrl = (customUrl && customUrl.trim()) ? customUrl.trim() : API_URL;
+    
+    let res = await fetch(`${activeUrl}${endpoint}`, options);
     clearTimeout(timeoutId);
 
     if (res.status === 401) {
@@ -41,10 +44,14 @@ async function apiFetch(endpoint, options = {}) {
   } catch (err) {
     clearTimeout(timeoutId);
     console.error("apiFetch Error:", err);
+    let extra = "";
+    if (err.name === 'AbortError') extra = " (Tiempo de espera agotado - Servidor despertando?)";
+    else if (err.toString().includes("TypeError")) extra = " (Error de red o CORS - ¿URL correcta?)";
+
     return { 
         ok: false, 
         status: 503, 
-        json: async () => ({ detail: "Error de conexión. Verifica tu internet o espera un momento." }) 
+        json: async () => ({ detail: `Error de conexión: ${err.message || err}${extra}` }) 
     };
   }
 }
