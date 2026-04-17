@@ -1,5 +1,5 @@
 // CEA ELECCIONES - Backend API URL
-const SYSTEM_VERSION = "4.2.6";
+const SYSTEM_VERSION = "4.3.0";
 
 // Fuerza recarga si la versión cambió (solo UNA vez)
 if (localStorage.getItem("cea_v") !== SYSTEM_VERSION) {
