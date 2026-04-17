@@ -1,5 +1,5 @@
 // 🛡️ CEA ELECCIONES - MOTOR DE RED v4.0.0 ULTRAPRO
-const SYSTEM_VERSION = "4.0.0";
+const SYSTEM_VERSION = "4.0.1";
 
 // FUERZA RECARGA TOTAL Y SINCRONIZACIÓN
 if (localStorage.getItem("cea_v") !== SYSTEM_VERSION) {

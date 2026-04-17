@@ -324,25 +324,44 @@
 
     mostrarMensaje('Verificando credenciales...', 'loading');
 
+    // CRÍTICO: El endpoint /login de OAuth2 necesita form-urlencoded, NO json.
+    // Usamos fetch directo para controlar la cabecera Content-Type.
     const body = new URLSearchParams();
     body.append('username', correo);
     body.append('password', clave);
 
     try {
-      const res = await apiFetch('/login', { method: 'POST', body });
+      // Descubrir backend primero si no está conectado
+      await descubrirBackend();
+      const apiUrl = getConnectedUrl();
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+      const res = await fetch(`${apiUrl}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString(),
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
       const data = await res.json();
       if (res.ok) {
         localStorage.setItem('jwt_token', data.access_token);
-        // Decode JWT to get rol
         const payload = JSON.parse(atob(data.access_token.split('.')[1]));
         const rol = payload.rol;
         localStorage.setItem('user_rol', rol);
         redirigirPorRol(rol);
       } else {
-        mostrarMensaje('❌ ' + (data.detail || 'Credenciales incorrectas.'), 'error');
+        // Manejar tanto string como array de errores (FastAPI 422)
+        let msg = 'Credenciales incorrectas.';
+        if (typeof data.detail === 'string') msg = data.detail;
+        else if (Array.isArray(data.detail)) msg = data.detail.map(e => e.msg || e).join(', ');
+        mostrarMensaje('❌ ' + msg, 'error');
       }
     } catch(e) {
-      mostrarMensaje('❌ Error de conexión. Intenta nuevamente.', 'error');
+      mostrarMensaje('❌ Error de conexión. El servidor puede estar despertando. Espera 30s e intenta de nuevo.', 'error');
     }
   }
 
