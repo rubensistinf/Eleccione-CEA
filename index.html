@@ -110,15 +110,41 @@
     }
     .cargando-candidatos { text-align: center; color: var(--muted); padding: 40px; font-size: 0.9rem; }
 
-    /* SECCIÓN LOGIN */
-    .seccion-login {
-      max-width: 480px; margin: 0 auto 60px; padding: 0 20px;
+    /* HEADER BUTTON */
+    .header-btn {
+      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+      color: white; padding: 10px 20px; border-radius: 8px; cursor: pointer;
+      font-size: 0.9rem; font-weight: 600; font-family: 'Inter', sans-serif;
+      transition: all 0.2s; display: flex; align-items: center; gap: 8px;
     }
+    .header-btn:hover { background: white; color: var(--azul); }
+
+    /* MODAL DE LOGIN */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 31, 91, 0.8); backdrop-filter: blur(5px);
+      z-index: 1000; display: none; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.active { display: flex; animation: fadeInModal 0.2s ease; }
+    @keyframes fadeInModal { from { opacity: 0; } to { opacity: 1; } }
+    
     .login-card {
       background: var(--card); border-radius: 20px;
-      box-shadow: 0 8px 40px rgba(0,53,128,0.12);
+      box-shadow: 0 10px 40px rgba(0,53,128,0.25);
+      width: 100%; max-width: 440px;
       overflow: hidden; border: 1px solid rgba(0,53,128,0.08);
+      position: relative;
     }
+    .btn-cerrar-modal {
+      position: absolute; top: 20px; right: 20px;
+      background: rgba(255,255,255,0.2); border: none; font-size: 1.2rem;
+      color: white; width: 32px; height: 32px; border-radius: 50%;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .btn-cerrar-modal:hover { background: rgba(255,255,255,0.4); }
+
     .login-card-header {
       background: linear-gradient(135deg, var(--azul), #1a3a8c);
       padding: 24px 30px;
@@ -185,8 +211,11 @@
     <img src="imagenes/logo.jpg" alt="Logo CEA" class="header-logo" onerror="this.src='https://placehold.co/52x52/003580/f5a623?text=CEA'">
     <div class="header-title">
       <h1>Elecciones Estudiantiles</h1>
-      <p>CEA Prof. Herman Ortiz Camargo — Pailón</p>
+      <p>CEA Prof. Herman Ortiz Camargo</p>
     </div>
+  </div>
+  <div>
+    <button class="header-btn" onclick="abrirModalAuth()">👤 Iniciar Sesión</button>
   </div>
 </header>
 
@@ -213,14 +242,15 @@
   </div>
 </section>
 
-<!-- LOGIN -->
-<section class="seccion-login">
+<!-- MODAL LOGIN -->
+<div class="modal-overlay" id="modal-login">
   <div class="login-card">
+    <button class="btn-cerrar-modal" onclick="cerrarModalAuth()">✕</button>
     <div class="login-card-header">
       <span class="icono">🗳️</span>
       <div>
         <h2>Acceso al Sistema</h2>
-        <p>Estudiantes: usa solo tu CI · Personal: correo y contraseña</p>
+        <p>Estudiantes usan CI · Personal usa correo</p>
       </div>
     </div>
     <div class="login-card-body">
@@ -233,7 +263,7 @@
       <div class="tab-content activo" id="tab-votante">
         <div class="form-group">
           <label>🪪 Número de Carnet de Identidad</label>
-          <input type="text" id="ci-input" placeholder="Ej: 1234567" autocomplete="off">
+          <input type="text" id="ci-input" placeholder="Ej: 1234567" autocomplete="off" onkeydown="if(event.key==='Enter') loginConCI()">
           <div class="hint">Ingresa solo tu número de CI (sin complemento ni letras)</div>
         </div>
         <button class="btn-login" id="btn-ci" onclick="loginConCI()">Ingresar al Sistema →</button>
@@ -261,12 +291,29 @@
       </button>
     </div>
   </div>
-</section>
+</div>
 
-<script src="js/api.js?v=4.3.5"></script>
+<script src="js/api.js?v=4.3.6"></script>
 <script>
-  // El motor de descubrimiento ahora está en api.js
-  // Eliminamos la variable local API para usar el descubrimiento automático
+  // MODAL FUNCIONES
+  function abrirModalAuth() {
+    document.getElementById('modal-login').classList.add('active');
+    setTimeout(() => { document.getElementById('ci-input').focus(); }, 100);
+  }
+  function cerrarModalAuth() {
+    document.getElementById('modal-login').classList.remove('active');
+    document.getElementById('mensaje-login').className = '';
+    document.getElementById('ci-input').value = '';
+    document.getElementById('contrasena').value = '';
+  }
+  
+  // Cerrar overlay al hacer click afueea
+  window.onclick = function(event) {
+    const overlay = document.getElementById('modal-login');
+    if (event.target === overlay) {
+      cerrarModalAuth();
+    }
+  }
 
   // ─── TABS ───
   function cambiarTab(tab) {
