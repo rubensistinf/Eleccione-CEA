@@ -331,8 +331,6 @@
     body.append('password', clave);
 
     try {
-      // Descubrir backend primero si no está conectado
-      await descubrirBackend();
       const apiUrl = getConnectedUrl();
       
       const controller = new AbortController();
