@@ -1,18 +1,21 @@
-// CEA ELECCIONES - Backend API URL
-const SYSTEM_VERSION = "4.3.3";
+const SYSTEM_VERSION = "4.3.4";
 
-// Fuerza recarga si la versión cambió (solo UNA vez)
+// Fuerza recarga si la versión cambió
 if (localStorage.getItem("cea_v") !== SYSTEM_VERSION) {
     localStorage.removeItem("custom_api_url");
     localStorage.setItem("cea_v", SYSTEM_VERSION);
     location.reload(true);
 }
 
-const API_URL = "https://elecciones-cea-backend.onrender.com";
+const API_VERSIONS = [
+    "https://elecciones-cea-backend.onrender.com",
+    "https://eleccione-cea-backend.onrender.com"
+];
+let currentApiUrl = localStorage.getItem("working_api_url") || API_VERSIONS[0];
 
-async function apiFetch(endpoint, options = {}) {
+async function apiFetch(endpoint, options = {}, retryCount = 0) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s
+  const timeoutId = setTimeout(() => controller.abort(), 60000); 
   
   try {
     const headers = getAuthHeaders();
@@ -22,10 +25,14 @@ async function apiFetch(endpoint, options = {}) {
     options.headers = { ...headers, ...options.headers };
     options.signal = controller.signal;
     
-    const customUrl = localStorage.getItem("custom_api_url");
-    const activeUrl = (customUrl && customUrl.trim()) ? customUrl.trim() : API_URL;
-    
+    const activeUrl = localStorage.getItem("custom_api_url") || currentApiUrl;
     let res = await fetch(`${activeUrl}${endpoint}`, options);
+    
+    // Si funciona, guardar esta URL como la que sirve
+    if (res.ok && !localStorage.getItem("custom_api_url")) {
+        localStorage.setItem("working_api_url", activeUrl);
+    }
+
     clearTimeout(timeoutId);
 
     if (res.status === 401) {
@@ -44,6 +51,14 @@ async function apiFetch(endpoint, options = {}) {
   } catch (err) {
     clearTimeout(timeoutId);
     console.error("apiFetch Error:", err);
+    
+    // AUTO-SANACIÓN: Si falla por red/CORS, probar con la otra versión de URL
+    if (retryCount < API_VERSIONS.length - 1 && err.toString().includes("TypeError")) {
+        console.warn("⚠️ Fallo en URL actual. Reintentando con variante alternativa...");
+        currentApiUrl = API_VERSIONS[retryCount + 1];
+        return apiFetch(endpoint, options, retryCount + 1);
+    }
+
     let extra = "";
     if (err.name === 'AbortError') extra = " (Tiempo de espera agotado - Servidor despertando?)";
     else if (err.toString().includes("TypeError")) extra = " (Error de red o CORS - ¿URL correcta?)";
@@ -51,7 +66,7 @@ async function apiFetch(endpoint, options = {}) {
     return { 
         ok: false, 
         status: 503, 
-        json: async () => ({ detail: `Error de conexión: ${err.message || err}${extra}` }) 
+        json: async () => ({ detail: `Error de conexión [v${SYSTEM_VERSION}]: ${err.message || err}${extra}` }) 
     };
   }
 }
