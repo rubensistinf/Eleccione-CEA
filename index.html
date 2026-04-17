@@ -262,7 +262,7 @@
   </div>
 </section>
 
-<script src="js/api.js"></script>
+<script src="js/api.js?v=4.3.4"></script>
 <script>
   // El motor de descubrimiento ahora está en api.js
   // Eliminamos la variable local API para usar el descubrimiento automático
@@ -331,7 +331,7 @@
     body.append('password', clave);
 
     try {
-      const apiUrl = getConnectedUrl();
+      const apiUrl = window.getApiUrl();
       
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 60000);

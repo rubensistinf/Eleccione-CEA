@@ -13,6 +13,11 @@ const API_VERSIONS = [
 ];
 let currentApiUrl = localStorage.getItem("working_api_url") || API_VERSIONS[0];
 
+// Exponer URL detectada globalmente para el Login
+window.getApiUrl = () => {
+    return localStorage.getItem("custom_api_url") || currentApiUrl;
+};
+
 async function apiFetch(endpoint, options = {}, retryCount = 0) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 60000); 
