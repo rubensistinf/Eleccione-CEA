@@ -31,13 +31,15 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             position: sticky; top: 0; z-index: 100;
         }
-
-        .header h1 { font-size: 1.2rem; font-weight: 700; }
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        .header-logo { width: 42px; height: 42px; border-radius: 50%; border: 2px solid var(--dorado); object-fit: cover; }
+        .header h1 { font-size: 1.1rem; font-weight: 700; }
+        .header p { font-size: 0.75rem; color: rgba(255,255,255,0.7); margin-top: 2px; }
         .btn-salir {
             background: rgba(255,255,255,0.1);
             color: white; border: 1px solid rgba(255,255,255,0.2);
             padding: 8px 16px; border-radius: 8px; cursor: pointer;
-            font-size: 0.85rem; font-weight: 600; transition: all 0.2s;
+            font-size: 0.85rem; font-weight: 600; transition: all 0.2s; font-family: 'Inter', sans-serif;
         }
         .btn-salir:hover { background: var(--error); border-color: var(--error); }
 
@@ -76,14 +78,14 @@
         .btn-primary {
             width: 100%; padding: 16px; background: var(--azul); color: white;
             border: none; border-radius: 12px; font-size: 1rem; font-weight: 700;
-            cursor: pointer; transition: all 0.3s; margin-bottom: 12px;
+            cursor: pointer; transition: all 0.3s; margin-bottom: 12px; font-family: 'Inter', sans-serif;
         }
         .btn-primary:hover { background: var(--azul-claro); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,53,128,0.2); }
 
         .btn-success {
             width: 100%; padding: 16px; background: var(--success); color: white;
             border: none; border-radius: 12px; font-size: 1rem; font-weight: 700;
-            cursor: pointer; transition: all 0.3s; display: none;
+            cursor: pointer; transition: all 0.3s; display: none; font-family: 'Inter', sans-serif;
             animation: pulse 2s infinite;
         }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.4); } 70% { box-shadow: 0 0 0 10px rgba(16,185,129,0); } 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } }
@@ -105,26 +107,28 @@
             background: var(--azul); color: white; padding: 2px 8px; 
             border-radius: 6px; font-size: 0.85rem; margin-left: 6px;
         }
+
+        .page-footer { text-align: center; margin-top: 32px; }
+        .page-footer p { font-size: 0.75rem; color: #94a3b8; }
     </style>
 </head>
 <body>
     <header class="header">
-        <div style="display:flex; align-items:center; gap:12px;">
-            <img src="../img/logo.png" alt="Logo" class="header-logo" onerror="this.src='https://placehold.co/44x44/003580/f5a623?text=CEA'">
-    <div>
-      <h1 style="font-size:1.1rem; line-height:1;">Control de Mesa <span style="font-size:0.65rem; background:rgba(255,255,255,0.25); padding:3px 8px; border-radius:12px; vertical-align:middle; font-weight:normal; margin-left:8px;">v4.0 UltraPRO</span></h1>
-      <p>Gestión de Mesa Electoral — CEA Pailón</p>
-    </div>
-  </div>
-  <div style="text-align:right; display:flex; align-items:center; gap:20px;">
-    <p id="connected-server-badge" style="font-size:0.7rem; color:rgba(255,255,255,0.5); font-family:monospace;"></p>
-    <button class="btn-salir" onclick="cerrarSesion()">Salir 🚪</button>
-  </div>
-</header>
+        <div class="header-left">
+            <img src="../imagenes/logo.jpg" alt="Logo CEA" class="header-logo" onerror="this.src='https://placehold.co/44x44/003580/f5a623?text=CEA'">
+            <div>
+              <h1>Control de Mesa Electoral</h1>
+              <p>Gestión de Mesa — CEA Pailón</p>
+            </div>
+        </div>
+        <div style="text-align:right; display:flex; align-items:center; gap:20px;">
+            <button class="btn-salir" onclick="cerrarSesion()">Salir 🚪</button>
+        </div>
+    </header>
 
     <div class="container">
-        <!-- BANNER DE IDENTIDAD PRO -->
-        <div style="background: linear-gradient(135deg, var(-- azul), #00255c); border: 2px solid var(--dorado); border-radius: 12px; padding: 15px; margin-bottom: 25px; color: white; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        <!-- BANNER DE IDENTIDAD -->
+        <div style="background: linear-gradient(135deg, var(--azul), #00255c); border: 2px solid var(--dorado); border-radius: 12px; padding: 15px; margin-bottom: 25px; color: white; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
             <div style="font-size: 2rem;">🛡️</div>
             <div>
                 <h2 style="font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;">Modo Jurado de Mesa</h2>
@@ -151,21 +155,13 @@
         </div>
     </div>
 
-    <div class="container" style="margin-top:20px; text-align:center;">
-        <p style="font-size:0.75rem; color:#64748b;">Sistema de Gestión Electoral CEA | v4.0 UltraPRO</p>
+    <div class="page-footer">
+        <p>Sistema de Gestión Electoral — CEA Prof. Herman Ortiz Camargo</p>
     </div>
 
     <script src="../js/api.js"></script>
     <script>
-        if (typeof getConnectedUrl === 'function') {
-            document.getElementById('connected-server-badge').textContent = '📡 Servidor: ' + getConnectedUrl();
-        }
-        setInterval(() => {
-            if (typeof getConnectedUrl === 'function') {
-                document.getElementById('connected-server-badge').textContent = '📡 Servidor: ' + getConnectedUrl();
-            }
-        }, 5000);
-        // Protección de ruta "Nivel Pro"
+        // Protección de ruta
         (function() {
             const rol = localStorage.getItem('user_rol');
             if(rol !== 'jefe' && rol !== 'admin') {
@@ -179,7 +175,6 @@
             const panel = document.getElementById('info-votante');
             const label = document.getElementById('label-info');
             const btnHabilitar = document.getElementById('btn-habilitar');
-            const btnConsultar = document.getElementById('btn-primary');
             
             if(!ci) return;
             
@@ -226,11 +221,10 @@
                 btnHabilitar.style.display = 'none';
                 document.getElementById('ci-votante').value = '';
                 
-                // Micro animación de éxito
                 document.querySelector('.card').style.background = "#f0fff4";
                 setTimeout(() => { document.querySelector('.card').style.background = "#fff"; }, 2000);
             } else {
-                const err = await res.json();
+                const err = res ? await res.json() : { detail: "Error de conexión." };
                 label.innerText = "❌ " + (err.detail || "Error al habilitar.");
             }
         }
@@ -244,4 +238,3 @@
     </script>
 </body>
 </html>
-

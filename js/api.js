@@ -1,17 +1,16 @@
-// 🛡️ CEA ELECCIONES - MOTOR DE RED v4.0.0 ULTRAPRO
-const SYSTEM_VERSION = "4.0.1";
+// CEA ELECCIONES - Motor de conexión y descubrimiento de backend
+const SYSTEM_VERSION = "4.2.0";
 
-// FUERZA RECARGA TOTAL Y SINCRONIZACIÓN
+// Fuerza recarga si la versión cambió (solo UNA vez)
 if (localStorage.getItem("cea_v") !== SYSTEM_VERSION) {
     localStorage.setItem("cea_v", SYSTEM_VERSION);
-    console.log("🚀 Versión 4.0 UltraPRO activada.");
     location.reload(true);
 }
 
 const POSSIBLE_BACKENDS = [
     localStorage.getItem("custom_api_url"),
-    "https://elecciones-cea-backend.onrender.com", // RESTAURADO PLURAL
-    "https://eleccione-cea-backend.onrender.com", 
+    "https://elecciones-cea-backend.onrender.com",
+    "https://eleccione-cea-backend.onrender.com",
     "https://votacion-cea-backend.onrender.com",
     window.location.origin
 ].filter(Boolean);
@@ -87,8 +86,7 @@ function getAuthHeaders() {
     return headers;
 }
 
-// SILENCIADO PARA NIVEL ULTRAPRO
-function debugLog(msg) { console.log("[UltraPRO API]", msg); }
+function debugLog(msg) { console.log("[CEA API]", msg); }
 
 function getConnectedUrl() { return API_URL; }
 

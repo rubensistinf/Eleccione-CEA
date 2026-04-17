@@ -207,14 +207,13 @@
 
 <header>
   <div class="header-left">
-    <img src="../img/logo.png" alt="Logo" class="header-logo" onerror="this.src='https://placehold.co/44x44/003580/f5a623?text=CEA'">
+    <img src="../imagenes/logo.jpg" alt="Logo CEA" class="header-logo" onerror="this.src='https://placehold.co/44x44/003580/f5a623?text=CEA'">
     <div>
-      <h1 style="font-size:1.1rem; line-height:1;">Papeleta Digital <span style="font-size:0.65rem; background:rgba(255,255,255,0.25); padding:3px 8px; border-radius:12px; vertical-align:middle; font-weight:normal; margin-left:8px;">v4.0 UltraPRO</span></h1>
+      <h1 style="font-size:1.1rem; line-height:1;">Papeleta Digital</h1>
       <p id="nombre-votante-header">Cargando información...</p>
     </div>
   </div>
   <div style="text-align:right; display:flex; align-items:center; gap:20px;">
-    <p id="connected-server-badge" style="font-size:0.7rem; color:rgba(255,255,255,0.5); font-family:monospace;"></p>
     <button class="btn-salir" onclick="cerrarSesion()">Salir 🚪</button>
   </div>
 </header>
@@ -286,7 +285,7 @@
     <div id="resultados-box"></div>
   </div>
   <div style="margin-top:40px; border-top:1px solid rgba(0,0,0,0.05); padding-top:20px; text-align:center;">
-    <p style="font-size:0.75rem; color:var(--muted);">Sistema de Gestión Electoral CEA | v4.0 UltraPRO</p>
+    <p style="font-size:0.75rem; color:var(--muted);">Sistema de Gestión Electoral — CEA Prof. Herman Ortiz Camargo</p>
   </div>
 </main>
 
@@ -308,14 +307,6 @@
 
 <script src="../js/api.js"></script>
 <script>
-  if (typeof getConnectedUrl === 'function') {
-      document.getElementById('connected-server-badge').textContent = '📡 Servidor: ' + getConnectedUrl();
-  }
-  setInterval(() => {
-    if (typeof getConnectedUrl === 'function') {
-      document.getElementById('connected-server-badge').textContent = '📡 Servidor: ' + getConnectedUrl();
-    }
-  }, 5000);
 
   // Protección de ruta "Nivel Pro"
   (function() {
