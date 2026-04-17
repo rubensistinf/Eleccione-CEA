@@ -262,7 +262,7 @@
   </div>
 </section>
 
-<script src="js/api.js?v=4.3.4"></script>
+<script src="js/api.js?v=4.3.5"></script>
 <script>
   // El motor de descubrimiento ahora está en api.js
   // Eliminamos la variable local API para usar el descubrimiento automático
@@ -397,7 +397,7 @@
   function redirigirPorRol(rol) {
     console.log("Iniciando redirección para rol:", rol);
     const base = window.location.origin;
-    const v = "?v=4.3.4"; // Bypass PWA cache
+    const v = "?v=4.3.5"; // Bypass PWA cache
     if (rol === 'admin') window.location.href = base + '/pages/dashboard-admin.html' + v;
     else if (rol === 'secretaria') window.location.href = base + '/pages/dashboard-secretaria.html' + v;
     else if (rol === 'jefe') window.location.href = base + '/pages/dashboard-jefe.html' + v;
