@@ -59,7 +59,13 @@ async function apiFetch(endpoint, options = {}) {
       return;
     }
     
-    if (res.status >= 500) throw new Error("Server Error");
+    if (res.status >= 500) {
+      return { 
+        ok: false, 
+        status: res.status, 
+        json: async () => ({ detail: "Error 500 del Servidor. Si el problema persiste, ve a Panel Admin -> 'Reparar Base de Datos'." }) 
+      };
+    }
     return res;
   } catch (err) {
     clearTimeout(timeoutId);
