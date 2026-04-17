@@ -1,8 +1,9 @@
 // CEA ELECCIONES - Motor de conexión y descubrimiento de backend
-const SYSTEM_VERSION = "4.2.0";
+const SYSTEM_VERSION = "4.2.4";
 
 // Fuerza recarga si la versión cambió (solo UNA vez)
 if (localStorage.getItem("cea_v") !== SYSTEM_VERSION) {
+    localStorage.removeItem("custom_api_url"); // Limpiar cualquier URL envenenada
     localStorage.setItem("cea_v", SYSTEM_VERSION);
     location.reload(true);
 }
@@ -26,7 +27,7 @@ async function descubrirBackend() {
             try {
                 const controller = new AbortController();
                 const id = setTimeout(() => controller.abort(), 6000); 
-                const res = await fetch(`${url}/ping`, { signal: controller.signal });
+                const res = await fetch(`${url}/openapi.json`, { signal: controller.signal });
                 clearTimeout(id);
                 if (res.ok) {
                     localStorage.setItem("custom_api_url", url);
