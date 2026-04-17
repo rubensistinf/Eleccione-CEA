@@ -1,42 +1,35 @@
-// 🛡️ CEA ELECCIONES - MOTOR DE RED v3.1.0 INDESTRUCTIBLE
-const SYSTEM_VERSION = "3.1.0";
+// 🛡️ CEA ELECCIONES - MOTOR DE RED v4.0.0 ULTRAPRO
+const SYSTEM_VERSION = "4.0.0";
 
-// FUERZA RECARGA TOTAL Y LIMPIEZA DE "GHOST SERVERS"
+// FUERZA RECARGA TOTAL Y SINCRONIZACIÓN
 if (localStorage.getItem("cea_v") !== SYSTEM_VERSION) {
-    const oldUrl = localStorage.getItem("custom_api_url") || "";
-    if (oldUrl.includes("elecciones-cea-backend")) {
-        localStorage.removeItem("custom_api_url"); 
-    }
     localStorage.setItem("cea_v", SYSTEM_VERSION);
-    console.log("🚀 Nueva versión 3.1 detectada. Optimizando conexión...");
+    console.log("🚀 Versión 4.0 UltraPRO activada.");
     location.reload(true);
 }
 
 const POSSIBLE_BACKENDS = [
     localStorage.getItem("custom_api_url"),
+    "https://elecciones-cea-backend.onrender.com", // RESTAURADO PLURAL
     "https://eleccione-cea-backend.onrender.com", 
     "https://votacion-cea-backend.onrender.com",
-    "https://cea- pailon-backend.onrender.com",
     window.location.origin
-].filter(url => url && !url.includes("elecciones-cea-backend")); 
+].filter(Boolean);
 
-let API_URL = POSSIBLE_BACKENDS[0] || "https://eleccione-cea-backend.onrender.com";
+let API_URL = POSSIBLE_BACKENDS[0] || "https://elecciones-cea-backend.onrender.com";
 let buscandoPromise = null;
 
 async function descubrirBackend() {
     if (buscandoPromise) return buscandoPromise;
     
     buscandoPromise = (async () => {
-        debugLog("🔍 Despertando servidores (puede tardar 40s)...");
         for (const url of POSSIBLE_BACKENDS) {
             try {
                 const controller = new AbortController();
-                // Tiempo de espera por servidor aumentado para Render
                 const id = setTimeout(() => controller.abort(), 6000); 
                 const res = await fetch(`${url}/ping`, { signal: controller.signal });
                 clearTimeout(id);
                 if (res.ok) {
-                    debugLog(`✨ Servidor encontrado: ${url}`);
                     localStorage.setItem("custom_api_url", url);
                     API_URL = url;
                     return true;
@@ -52,12 +45,10 @@ async function descubrirBackend() {
 }
 
 async function apiFetch(endpoint, options = {}) {
-  // Timeout aumentado a 60 segundos para permitir el "Cold Start" de Render
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 60000); 
+  const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s
   
   try {
-    debugLog(`📡 Solicitando: ${endpoint}...`);
     options.headers = getAuthHeaders();
     options.signal = controller.signal;
     
@@ -65,35 +56,26 @@ async function apiFetch(endpoint, options = {}) {
     clearTimeout(timeoutId);
 
     if (res.status === 401) {
-      debugLog(`🔐 Sesión caducada.`);
       cerrarSesion();
       return;
     }
     
-    if (res.status >= 500) {
-        throw new Error("Server Error");
-    }
-
-    debugLog(`✅ Conexión Ok (${res.status})`);
+    if (res.status >= 500) throw new Error("Server Error");
     return res;
   } catch (err) {
     clearTimeout(timeoutId);
-    debugLog("🚨 Servidor en reposo. Intentando despertar...");
-    
+    // Recuperación silenciosa
     const encontrado = await descubrirBackend();
     if (encontrado) {
-        debugLog("🔄 Servidor despierto. Reintentando...");
         if (options.body && typeof options.body !== 'string') {
-            debugLog("⚠️ Error de reintento. Por favor pulsa el botón de nuevo.");
-            return { ok: false, status: 503, json: async() => ({detail: "Reintenta ahora, el servidor ya despertó."})};
+            return { ok: false, status: 503, json: async() => ({detail: "Reintenta ahora."})};
         }
         return apiFetch(endpoint, options);
     }
-    
     return { 
         ok: false, 
         status: 503, 
-        json: async () => ({ detail: "El servidor no responde. Pulsa REPARAR CONEXIÓN." }) 
+        json: async () => ({ detail: "Error de conexión. Intenta de nuevo en un momento." }) 
     };
   }
 }
@@ -105,15 +87,8 @@ function getAuthHeaders() {
     return headers;
 }
 
-function debugLog(msg) {
-    console.log("[DEBUG]", msg);
-    const el = document.getElementById('debug-monitor');
-    if (el) {
-        const time = new Date().toLocaleTimeString();
-        el.innerHTML = `<div style="border-bottom:1px solid #334155; padding:2px 0;"><span style="color:#64748b;">[${time}]</span> ${msg}</div>` + el.innerHTML;
-        if (el.innerHTML.length > 5000) el.innerHTML = el.innerHTML.substring(0, 5000);
-    }
-}
+// SILENCIADO PARA NIVEL ULTRAPRO
+function debugLog(msg) { console.log("[UltraPRO API]", msg); }
 
 function getConnectedUrl() { return API_URL; }
 
