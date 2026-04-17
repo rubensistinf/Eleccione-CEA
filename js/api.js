@@ -1,5 +1,5 @@
 // CEA ELECCIONES - Backend API URL
-const SYSTEM_VERSION = "4.2.5";
+const SYSTEM_VERSION = "4.2.6";
 
 // Fuerza recarga si la versión cambió (solo UNA vez)
 if (localStorage.getItem("cea_v") !== SYSTEM_VERSION) {
@@ -15,7 +15,11 @@ async function apiFetch(endpoint, options = {}) {
   const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s
   
   try {
-    options.headers = getAuthHeaders();
+    const headers = getAuthHeaders();
+    if (!(options.body instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
+    }
+    options.headers = { ...headers, ...options.headers };
     options.signal = controller.signal;
     
     let res = await fetch(`${API_URL}${endpoint}`, options);
@@ -47,7 +51,7 @@ async function apiFetch(endpoint, options = {}) {
 
 function getAuthHeaders() {
     const token = localStorage.getItem("jwt_token");
-    const headers = { 'Content-Type': 'application/json' };
+    const headers = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
     return headers;
 }
