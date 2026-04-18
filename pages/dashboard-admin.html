@@ -403,13 +403,15 @@
               <div style="font-weight:800;font-size:1rem;margin-top:8px;" id="estado-titulo">Cargando...</div>
               <div style="font-size:0.8rem;color:var(--muted);margin-top:4px;" id="estado-nombre-eleccion">—</div>
             </div>
+            <!-- TOP 3 BARS INJECTED HERE -->
+            <div id="estado-votacion-top3" style="margin-top:16px; text-align:left; border-top:1px dashed #cbd5e1; padding-top:12px;"></div>
           </div>
-          <div class="form-group">
+          <div class="form-group" style="display:none;">
+            <!-- Hidden to avoid clutter since it syncs automatically -->
             <label>ID de Elección a controlar</label>
             <input type="number" id="toggle-eleccion-id" class="sync-id" placeholder="Ej: 1" oninput="actualizarIDGlobal(this.value)">
           </div>
-          <button class="btn-action btn-verde" id="btn-abrir-votar" onclick="abrirVotacion()">🟢 ABRIR VOTACIÓN</button>
-          <button class="btn-action btn-rojo"  id="btn-cerrar-votar" onclick="cerrarVotacion()">🔴 CERRAR VOTACIÓN</button>
+          <button class="btn-action" style="background:#94a3b8; color:white;" id="btn-toggle-principal" disabled>⏳ Cargando...</button>
           <div class="msg-box" id="msg-control-voto"></div>
         </div>
       </div>
@@ -951,49 +953,106 @@
 
   // ─── CONTROL DE VOTACIÓN (en paso 3) ───
   async function cargarEstadoVotacion() {
-    const r = await fetch(`${API_URL}/votante/estado-eleccion`);
-    if (!r || !r.ok) return;
-    const d = await r.json();
-    const iconEl = document.getElementById('estado-icono');
-    const titEl = document.getElementById('estado-titulo');
-    const nomEl = document.getElementById('estado-nombre-eleccion');
-    nomEl.textContent = d.nombre || 'Sin elección';
-    if (d.activa) {
-      iconEl.textContent = '🟢';
-      titEl.style.color = '#16a34a';
-      titEl.textContent = 'Votación ABIERTA';
-    } else {
-      iconEl.textContent = '🔴';
-      titEl.style.color = '#dc2626';
-      titEl.textContent = 'Votación CERRADA';
+    let urlBase = window.getApiUrl();
+    if(urlBase.endsWith('/')) urlBase = urlBase.slice(0, -1);
+    
+    try {
+        const r = await fetch(`${urlBase}/votante/estado-eleccion`);
+        if (!r || !r.ok) return;
+        const d = await r.json();
+        
+        const iconEl = document.getElementById('estado-icono');
+        const titEl = document.getElementById('estado-titulo');
+        const nomEl = document.getElementById('estado-nombre-eleccion');
+        const btnToggle = document.getElementById('btn-toggle-principal');
+        const top3Container = document.getElementById('estado-votacion-top3');
+        
+        nomEl.textContent = d.nombre || 'Sin elección';
+        btnToggle.disabled = false;
+        
+        if (d.activa) {
+          iconEl.textContent = '🟢';
+          titEl.style.color = '#16a34a';
+          titEl.textContent = 'Votación ABIERTA';
+          
+          btnToggle.className = 'btn-action btn-rojo';
+          btnToggle.innerHTML = '⏸️ PAUSAR VOTACIÓN';
+          btnToggle.onclick = cerrarVotacion;
+        } else {
+          iconEl.textContent = '🔴';
+          titEl.style.color = '#dc2626';
+          titEl.textContent = 'Votación CERRADA';
+
+          btnToggle.className = 'btn-action btn-verde';
+          btnToggle.innerHTML = '▶️ INICIAR VOTACIÓN';
+          btnToggle.onclick = abrirVotacion;
+        }
+        if (d.id) document.getElementById('toggle-eleccion-id').value = d.id;
+
+        // Render TOP 3
+        if (d.id) {
+            const rRes = await apiFetch(`/admin/reportes/resultados`, { method:'GET' });
+            if (rRes && rRes.ok) {
+                const resultados = await rRes.json();
+                const top3 = resultados.slice(0, 3);
+                if (top3.length === 0) {
+                    top3Container.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:0.8rem;">Aún no hay votos registrados.</div>';
+                } else {
+                    const maxV = top3[0].votos > 0 ? top3[0].votos : 1;
+                    top3Container.innerHTML = top3.map((c, i) => `
+                        <div style="margin-bottom:10px;">
+                            <div style="display:flex; justify-content:space-between; font-size:0.78rem; font-weight:700;">
+                                <span style="color:var(--text);">${i+1}° ${c.candidato}</span>
+                                <span style="color:var(--azul);">${c.votos} votos</span>
+                            </div>
+                            <div style="height:6px; background:#e2e8f0; border-radius:3px; margin-top:3px; overflow:hidden;">
+                                <div style="height:100%; width:${Math.min((c.votos / maxV) * 100, 100)}%; background:linear-gradient(90deg,var(--azul),var(--naranja)); border-radius:3px; transition:width 0.8s ease;"></div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            }
+        }
+    } catch(e) {
+        console.error("Error cargando estado:", e);
     }
-    if (d.id) document.getElementById('toggle-eleccion-id').value = d.id;
   }
 
   async function abrirVotacion() {
     const id = activeEleccionId;
     if (!id) { mostrarMsg('msg-control-voto','❌ Primero selecciona una elección.','error'); return; }
+    
+    // UI Update immediate
+    const btn = document.getElementById('btn-toggle-principal');
+    btn.disabled = true; btn.innerHTML = '⏳ Abriendo...';
+
     const r = await apiFetch(`/admin/elecciones/${id}/toggle`, { method:'POST' });
     if (r && r.ok) {
       const d = await r.json();
       if (d.activa) {
         mostrarMsg('msg-control-voto','🟢 ¡Votación ABIERTA! Los votantes ya pueden votar.','ok');
-        cargarEstadoVotacion(); cargarEstadoBanner();
-      } else {
-        mostrarMsg('msg-control-voto','⚠️ La elección estaba abierta y se cerró. Usa el botón correcto.','info');
-        cargarEstadoVotacion(); cargarEstadoBanner();
       }
+      cargarEstadoVotacion(); cargarEstadoBanner();
+    } else {
+      btn.disabled = false; btn.innerHTML = '▶️ INICIAR VOTACIÓN';
     }
   }
 
   async function cerrarVotacion() {
     const id = activeEleccionId;
     if (!id) { mostrarMsg('msg-control-voto','❌ Primero selecciona una elección.','error'); return; }
-    if (!confirm('¿Cerrar la votación? Los votantes ya no podrán emitir votos.')) return;
+    if (!confirm('¿Pausar/Cerrar la votación? Los votantes ya no podrán emitir votos hasta que la inicies de nuevo.')) return;
+    
+    // UI Update immediate
+    const btn = document.getElementById('btn-toggle-principal');
+    btn.disabled = true; btn.innerHTML = '⏳ Pausando...';
+
     const r = await apiFetch(`/admin/elecciones/${id}/toggle`, { method:'POST' });
     if (r && r.ok) {
-      mostrarMsg('msg-control-voto','🔴 Votación CERRADA.','info');
+      mostrarMsg('msg-control-voto','🔴 Votación PAUSADA/CERRADA.','info');
       cargarEstadoVotacion(); cargarEstadoBanner();
+    } else {
+      btn.disabled = false; btn.innerHTML = '⏸️ PAUSAR VOTACIÓN';
     }
   }
 
